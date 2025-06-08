@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Memory Locator Extension",
+  "version": "1.0.2",
+  "description": "Search for public memories in GitHub, Twitter, Miraheze, and j03.page.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "notifications",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://api.github.com/",
+    "https://*.twitter.com/",
+    "https://*.miraheze.org/",
+    "https://*.j03.page/"
+  ],
+  "omnibox": {
+    "keyword": "j03-project"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon_16.png",
+      "48": "icon_48.png",
+      "128": "icon_128.png"
+    }
+  },
+  "icons": {
+    "16": "icon_16.png",
+    "48": "icon_48.png",
+    "128": "icon_128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["search.html", "search.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "author": "Jeremiah O'Neal",
+  "homepage_url": "http://utils.j03.page/"
+}

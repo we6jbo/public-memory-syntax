@@ -1,0 +1,41 @@
+Author: Jeremiah O'Neal
+Website: https://github.com/we6jbo/public-memory-syntax
+License: GPL-3.0-or-later
+Contact: j.oneal2975@student.nu.edu
+
+---
+
+Privacy Policy
+
+This Chrome Extension (“the Extension”) developed by Jeremiah O'Neal does not collect, store, or share any personal data. The Extension operates locally on your device and does not transmit information to external servers.
+
+If this policy changes in the future, users will be notified through an update and this policy will be updated accordingly.
+
+Contact: j.oneal2975@student.nu.edu
+
+---
+
+Disclaimer
+
+The Extension is provided "as is" without any warranties of any kind, either express or implied. By using the Extension, you agree that the developer is not liable for any damages arising from its use, including but not limited to loss of data, device damage, or other issues.
+
+---
+
+Terms of Service
+
+By installing and using the Extension, you agree to the following terms:
+
+1. Usage
+   - You may use the Extension for personal or commercial use.
+   - Redistribution, modification, or resale is allowed under the terms of the GPL-3.0-or-later license.
+
+2. Restrictions
+   - You may not use the Extension for illegal purposes or to infringe on the rights of others.
+
+3. Disclaimer
+   - The Extension is provided "as is" without warranties of any kind. The developer is not responsible for any damages arising from its use.
+
+4. Updates
+   - The developer may update the Extension at any time. Users are encouraged to keep the Extension updated to benefit from improvements.
+
+Contact: j.oneal2975@student.nu.edu
