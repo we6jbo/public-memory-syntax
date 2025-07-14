@@ -37,6 +37,7 @@ def do_tasks():
         for task in tasks:
             print(f"🛠️ Working on task: {task}")
             filename = os.path.basename(task)
+            urllib.request.urlretrieve(task, filename)
             try:
                 
                 urllib.request.urlretrieve(url, filename)
@@ -45,7 +46,7 @@ def do_tasks():
                     print(f"❌ Error running {filename}:")
                     print(result.stderr)
                 else:
-                    print(f"✅ Task {filename} completed successfully."
+                    print(f"✅ Task {filename} completed successfully.")
             except Exception as e:
                 print(f"⚠️ Failed to process {task}: {e}")
             time.sleep(3)
