@@ -162,7 +162,7 @@ def recovery_stub(context=""):
     time.sleep(2)
     #print("✅ Exiting recovery stub. Continuing exploration...\n")
 
-def get_valid_name(prompt, role="person"):
+def get_valid_name(prompt, role="person", person_path="the person"):
     attempts = 0
     while attempts < 5:
         name = get_quendor_response(prompt)
@@ -176,7 +176,11 @@ def get_valid_name(prompt, role="person"):
             "Let’s try that again—just the full name please."
         ])
         print(f"{reasoning}")
-        #print("Quendor, I only need a first and last name.")
+        if role == "father":
+            print("What is the first and last name of the father")
+        elif role == "mother":
+            print("What is the first and last name of the mother")
+        print(f"I only need a first and last name {person_path}")
         attempts += 1
     fallback = "Doug ONeal" if role == "father" else "Natalie Maynard"
     #print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
@@ -193,7 +197,7 @@ def explore_person(person_path):
 
     delay_and_check_time()
     person_name = extract_name_from_path(person_path)
-    say_to_quendor(f"learn_about {person_name}")
+    say_to_quendor(f"Respond only with learn_about {person_name}. Dont enter anything else and do not say you are sorry.")
     delay_and_check_time()
 
     info_path = os.path.join(person_path, "info.txt")
@@ -202,10 +206,10 @@ def explore_person(person_path):
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
 
-    father = get_valid_name("Quendor, please give me the exact name of the father", role="father")
+    father = get_valid_name("Quendor, please give me the exact name of the father", role="father", person_path)
     father_path = ensure_family_folder(person_path, father, "male")
 
-    mother = get_valid_name("Quendor, please give me the exact name of the mother", role="mother")
+    mother = get_valid_name("Quendor, please give me the exact name of the mother", role="mother", person_path)
     mother_path = ensure_family_folder(person_path, mother, "female")
 
     delay_and_check_time()
