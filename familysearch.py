@@ -67,7 +67,7 @@ def normalize_name(name):
 def delay_and_check_time():
     global START_TIME
     if time.time() - START_TIME > 2 * 3600:
-        #print("🕒 I am done researching my tree. Time limit reached.")
+        print("I am going to take a break on researching my tree. I will come back to this later.")
         exit(0)
     time.sleep(random.randint(3, 14))
 
