@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "v0.2"
+VERSION = "v0.3"
 
 import os
 import shutil
@@ -92,6 +92,26 @@ def ensure_family_folder(parent, name, gender):
     os.makedirs(subfolder, exist_ok=True)
     return subfolder
 
+def get_valid_name(prompt, role="person"):
+    attempts = 0
+    while attempts < 5:
+        name = get_quendor_response(prompt)
+        if is_valid_name(name):
+            return name
+        reasoning = random.choice([
+            "I’m trying to confirm both first and last names to organize lineage.",
+            f"This helps ensure we link the correct {role} to their branch.",
+            "Without two names, I can’t tell who we’re referring to.",
+            "That doesn’t look like a full name. Please enter both names.",
+            "Let’s try that again—just the full name please."
+        ])
+        print(f"🧠 Reasoning: {reasoning}")
+        print("Quendor, I only need a first and last name.")
+        attempts += 1
+    fallback = "John Smith" if role == "father" else "Jane Smith"
+    print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
+    return fallback
+
 def explore_person(person_path):
     # Random chance to return to root
     if random.randint(1, 4) == 1:
@@ -112,20 +132,10 @@ def explore_person(person_path):
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
 
-    # Ask for father
-    father = ""
-    while not is_valid_name(father):
-        father = get_quendor_response("Quendor, please give me the exact name of the father")
-        if not is_valid_name(father):
-            print("Quendor, I only need a first and last name.")
+    father = get_valid_name("Quendor, please give me the exact name of the father", role="father")
     father_path = ensure_family_folder(person_path, father, "male")
 
-    # Ask for mother
-    mother = ""
-    while not is_valid_name(mother):
-        mother = get_quendor_response("Quendor, please give me the exact name of the mother")
-        if not is_valid_name(mother):
-            print("Quendor, I only need a first and last name.")
+    mother = get_valid_name("Quendor, please give me the exact name of the mother", role="mother")
     mother_path = ensure_family_folder(person_path, mother, "female")
 
     delay_and_check_time()
