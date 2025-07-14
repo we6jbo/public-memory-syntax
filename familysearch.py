@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "v0.1"
+VERSION = "v0.2"
 
 import os
 import shutil
@@ -40,7 +40,16 @@ def seed_family_tree_structure():
 
 # === Globals ===
 START_TIME = time.time()
-RESEARCH_LOG = os.path.expanduser("~/FamilyTree/research.txt")
+
+def get_familytree_path():
+    test_path = "/tmp/Test_Jul14/FamilyTree"
+    if os.path.exists(test_path):
+        print("⚙️  Using override path: /tmp/Test_Jul14/FamilyTree")
+        return test_path
+    return os.path.expanduser("~/FamilyTree")
+
+FAMILYTREE_ROOT = get_familytree_path()
+RESEARCH_LOG = os.path.join(FAMILYTREE_ROOT, "research.txt")
 
 # === Utility functions ===
 def strip_to_alpha(text):
@@ -86,7 +95,7 @@ def ensure_family_folder(parent, name, gender):
 def explore_person(person_path):
     # Random chance to return to root
     if random.randint(1, 4) == 1:
-        root = os.path.expanduser("~/FamilyTree")
+        root = FAMILYTREE_ROOT
         subdirs = [d for d in os.listdir(root) if d.endswith(("_male", "_female"))]
         if subdirs:
             explore_person(os.path.join(root, random.choice(subdirs)))
@@ -125,10 +134,10 @@ def explore_person(person_path):
 
 # === Main Entry ===
 def main():
-    os.makedirs(os.path.expanduser("~/FamilyTree"), exist_ok=True)
+    os.makedirs(FAMILYTREE_ROOT, exist_ok=True)
     if not os.path.exists(RESEARCH_LOG):
         open(RESEARCH_LOG, "w").close()
-    explore_person(os.path.expanduser("~/FamilyTree/jeremiah_oneal_male"))
+    explore_person(os.path.join(FAMILYTREE_ROOT, "jeremiah_oneal_male"))
 
 if __name__ == "__main__":
     copy_self_if_missing()
