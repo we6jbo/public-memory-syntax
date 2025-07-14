@@ -19,8 +19,8 @@ def introduce():
 
 def download_tasks():
     try:
-        urllib.request.urlretrieve(task, filename)
-        #urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
+        #urllib.request.urlretrieve(task, filename)
+        urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
         print(f"✅ Task list downloaded to {LOCAL_TASK_FILE}")
         return True
     except Exception as e:
@@ -41,7 +41,7 @@ def do_tasks():
             urllib.request.urlretrieve(task, filename)
             try:
                 
-                urllib.request.urlretrieve(url, filename)
+                urllib.request.urlretrieve(task, filename)
                 result = subprocess.run(["python3", filename])
                 if result.returncode != 0:
                     print(f"❌ Error running {filename}:")
