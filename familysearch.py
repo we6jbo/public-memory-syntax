@@ -42,10 +42,8 @@ def seed_family_tree_structure():
                 normalized_path = os.path.expanduser(path).lower()
                 try:
                     os.makedirs(normalized_path, exist_ok=True)
-                    #print(f"📁 Created: {normalized_path}")
                 except Exception as e:
-                    #print(f"❌ Error creating {normalized_path}: {e}")
-
+                    i = 1
 # === Globals ===
 START_TIME = time.time()
 
@@ -78,10 +76,10 @@ def is_valid_name(name):
 
 def get_quendor_response(prompt):
     #print(f"{prompt}")
-    return input("Your input: ").strip()
-
+    return input("").strip()
+    #This is where the input from quendor goes.
 def say_to_quendor(message):
-    #print(f"{message}")
+    print(f"{message}")
 
 def write_info_and_log(info_path, name, content):
     os.makedirs(os.path.dirname(info_path), exist_ok=True)
@@ -104,7 +102,7 @@ def ensure_family_folder(parent, name, gender):
 
 
 def introduce():
-    #print(f"I am working on a family tree. I am going to download something. Hold on. There may be errors.\n")
+    print(f"I am working on a family tree. I am going to download something. Hold on. There may be errors.\n")
 
 def download_tasks():
     try:
@@ -135,20 +133,25 @@ def do_tasks():
                 if result.returncode != 0:
                     #print(f"❌ Error running {filename}:")
                     #print(result.stderr)
+                    i = 1
                 else:
                     #print(f"✅ Task {filename} completed successfully.")
+                    i = 1
             except Exception as e:
                 #print(f"⚠️ Failed to process {task}: {e}")
+                i = 1
             time.sleep(3)
         #print("✅ All tasks completed.")
     except Exception as e:
         #print(f"❌ Failed to read or process tasks: {e}")
+        i = 1
 
 
 def recovery_stub(context=""):
     #print("🛠️ Entering recovery stub...")
     if context:
         #print(f"🔍 Context: {context}")
+        i = 1
     ############## BEGIN CUSTOM CODE BLOCK ##############
     # Place your custom recovery or fallback logic here
     introduce()
@@ -173,7 +176,7 @@ def get_valid_name(prompt, role="person"):
             "Let’s try that again—just the full name please."
         ])
         print(f"{reasoning}")
-        print("Quendor, I only need a first and last name.")
+        #print("Quendor, I only need a first and last name.")
         attempts += 1
     fallback = "Doug ONeal" if role == "father" else "Natalie Maynard"
     #print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
