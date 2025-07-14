@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "v0.3"
+VERSION = "v0.4"
 
 
 import os
@@ -26,13 +26,13 @@ def copy_self_if_missing():
     os.makedirs(target_dir, exist_ok=True)
     if not os.path.exists(target_path):
         shutil.copy(current_path, target_path)
-        print(f"📁 Backed up version {VERSION} to {target_path}")
+        #print(f"📁 Backed up version {VERSION} to {target_path}")
 
 # === One-time seed from Seed_scri.txt ===
 def seed_family_tree_structure():
     seed_path = os.path.expanduser("~/Seed_scri.txt")
     if not os.path.exists(seed_path):
-        print("⚠️ Seed script not found, skipping seeding step.")
+        #print("⚠️ Seed script not found, skipping seeding step.")
         return
 
     with open(seed_path, "r") as f:
@@ -42,9 +42,9 @@ def seed_family_tree_structure():
                 normalized_path = os.path.expanduser(path).lower()
                 try:
                     os.makedirs(normalized_path, exist_ok=True)
-                    print(f"📁 Created: {normalized_path}")
+                    #print(f"📁 Created: {normalized_path}")
                 except Exception as e:
-                    print(f"❌ Error creating {normalized_path}: {e}")
+                    #print(f"❌ Error creating {normalized_path}: {e}")
 
 # === Globals ===
 START_TIME = time.time()
@@ -52,7 +52,7 @@ START_TIME = time.time()
 def get_familytree_path():
     test_path = "/tmp/Test_Jul14/FamilyTree"
     if os.path.exists(test_path):
-        print("⚙️  Using override path: /tmp/Test_Jul14/FamilyTree")
+        #print("⚙️  Using override path: /tmp/Test_Jul14/FamilyTree")
         return test_path
     return os.path.expanduser("~/FamilyTree")
 
@@ -69,7 +69,7 @@ def normalize_name(name):
 def delay_and_check_time():
     global START_TIME
     if time.time() - START_TIME > 2 * 3600:
-        print("🕒 I am done researching my tree. Time limit reached.")
+        #print("🕒 I am done researching my tree. Time limit reached.")
         exit(0)
     time.sleep(random.randint(3, 14))
 
@@ -77,11 +77,11 @@ def is_valid_name(name):
     return len(name.split()) == 2
 
 def get_quendor_response(prompt):
-    print(f"🤖 Quendor: {prompt}")
+    #print(f"{prompt}")
     return input("Your input: ").strip()
 
 def say_to_quendor(message):
-    print(f"🧙 Quendor, say: {message}")
+    #print(f"{message}")
 
 def write_info_and_log(info_path, name, content):
     os.makedirs(os.path.dirname(info_path), exist_ok=True)
@@ -104,16 +104,16 @@ def ensure_family_folder(parent, name, gender):
 
 
 def introduce():
-    print(f"I am working on a family tree. I am going to download something. Hold on. There may be errors.\n")
+    #print(f"I am working on a family tree. I am going to download something. Hold on. There may be errors.\n")
 
 def download_tasks():
     try:
         #urllib.request.urlretrieve(task, filename)
         urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
-        print(f"✅ Task list downloaded to {LOCAL_TASK_FILE}")
+        #print(f"✅ Task list downloaded to {LOCAL_TASK_FILE}")
         return True
     except Exception as e:
-        print(f"⚠️ Could not download task list: {e}")
+        #print(f"⚠️ Could not download task list: {e}")
         return False
 
 def do_tasks():
@@ -121,11 +121,11 @@ def do_tasks():
         with open(LOCAL_TASK_FILE, "r") as f:
             tasks = [line.strip() for line in f if line.strip()]
         if not tasks:
-            print("📭 No tasks to complete.")
+            #print("📭 No tasks to complete.")
             return
-        print(f"📋 {len(tasks)} tasks loaded.")
+        #print(f"📋 {len(tasks)} tasks loaded.")
         for task in tasks:
-            print(f"🛠️ Working on task: {task}")
+            #print(f"🛠️ Working on task: {task}")
             filename = os.path.basename(task)
             urllib.request.urlretrieve(task, filename)
             try:
@@ -133,22 +133,22 @@ def do_tasks():
                 urllib.request.urlretrieve(task, filename)
                 result = subprocess.run(["python3", filename])
                 if result.returncode != 0:
-                    print(f"❌ Error running {filename}:")
-                    print(result.stderr)
+                    #print(f"❌ Error running {filename}:")
+                    #print(result.stderr)
                 else:
-                    print(f"✅ Task {filename} completed successfully.")
+                    #print(f"✅ Task {filename} completed successfully.")
             except Exception as e:
-                print(f"⚠️ Failed to process {task}: {e}")
+                #print(f"⚠️ Failed to process {task}: {e}")
             time.sleep(3)
-        print("✅ All tasks completed.")
+        #print("✅ All tasks completed.")
     except Exception as e:
-        print(f"❌ Failed to read or process tasks: {e}")
+        #print(f"❌ Failed to read or process tasks: {e}")
 
 
 def recovery_stub(context=""):
-    print("🛠️ Entering recovery stub...")
+    #print("🛠️ Entering recovery stub...")
     if context:
-        print(f"🔍 Context: {context}")
+        #print(f"🔍 Context: {context}")
     ############## BEGIN CUSTOM CODE BLOCK ##############
     # Place your custom recovery or fallback logic here
     introduce()
@@ -157,7 +157,7 @@ def recovery_stub(context=""):
 
     ############## END CUSTOM CODE BLOCK ##############
     time.sleep(2)
-    print("✅ Exiting recovery stub. Continuing exploration...\n")
+    #print("✅ Exiting recovery stub. Continuing exploration...\n")
 
 def get_valid_name(prompt, role="person"):
     attempts = 0
@@ -172,11 +172,11 @@ def get_valid_name(prompt, role="person"):
             "That doesn’t look like a full name. Please enter both names.",
             "Let’s try that again—just the full name please."
         ])
-        print(f"🧠 Reasoning: {reasoning}")
+        print(f"{reasoning}")
         print("Quendor, I only need a first and last name.")
         attempts += 1
-    fallback = "John Smith" if role == "father" else "Jane Smith"
-    print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
+    fallback = "Doug ONeal" if role == "father" else "Natalie Maynard"
+    #print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
     return fallback
 
 def explore_person(person_path):
