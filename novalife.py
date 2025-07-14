@@ -19,7 +19,8 @@ def introduce():
 
 def download_tasks():
     try:
-        urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
+        urllib.request.urlretrieve(task, filename)
+        #urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
         print(f"✅ Task list downloaded to {LOCAL_TASK_FILE}")
         return True
     except Exception as e:
