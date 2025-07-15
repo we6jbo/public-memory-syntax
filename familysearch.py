@@ -206,10 +206,10 @@ def explore_person(person_path):
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
 
-    father = get_valid_name("Quendor, please give me the exact name of the father", role="father", person_path)
+    father = get_valid_name("Quendor, please give me the exact name of the father", role="father", person_name=person_name)
     father_path = ensure_family_folder(person_path, father, "male")
 
-    mother = get_valid_name("Quendor, please give me the exact name of the mother", role="mother", person_path)
+    mother = get_valid_name("Quendor, please give me the exact name of the mother", role="mother", person_name=person_name)
     mother_path = ensure_family_folder(person_path, mother, "female")
 
     delay_and_check_time()
