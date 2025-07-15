@@ -164,6 +164,7 @@ def recovery_stub(context=""):
 
 def get_valid_name(prompt, role="person", person_path="the person"):
     attempts = 0
+    person_name = extract_name_from_path(person_path)
     while attempts < 5:
         name = get_quendor_response(prompt)
         if is_valid_name(name):
@@ -177,11 +178,12 @@ def get_valid_name(prompt, role="person", person_path="the person"):
         ])
         print(f"{reasoning}")
         if role == "father":
-            print("What is the first and last name of the father")
+            print("What is the first and last name of {person_name}s father")
         elif role == "mother":
-            print("What is the first and last name of the mother")
+            print("What is the first and last name of {person_name}s mother")
             person_name = extract_name_from_path(person_path)
-        print(f"I only need a first and last name {person_name}")
+        else
+            print(f"I only need a first and last name for {person_name}s parent")
         attempts += 1
     fallback = "Doug ONeal" if role == "father" else "Natalie Maynard"
     #print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
