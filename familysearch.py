@@ -9,6 +9,7 @@ import time
 import random
 import urllib.request
 import subprocess
+import re
 from datetime import datetime
 
 TASK_URL = "https://raw.githubusercontent.com/we6jbo/public-memory-syntax/refs/heads/main/recovery_list"
