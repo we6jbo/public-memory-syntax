@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "v0.5"
+VERSION = "v0.6"
 
 import os
 import shutil
@@ -47,7 +47,7 @@ def strip_to_alpha(text): return ''.join(c for c in text if c.isalpha())
 def normalize_name(name): return name.lower().replace(" ", "_").replace("'", "")
 def delay_and_check_time():
     if time.time() - START_TIME > 15 * 60:
-        print("⏱️ 15 minutes passed. Ending session.")
+        print("Thank you for helping me research my family tree.")
         exit(0)
     time.sleep(random.randint(3, 14))
 
@@ -95,16 +95,12 @@ def recovery_stub(context=""):
     time.sleep(2)
 
 def get_valid_name(prompt, role="person", person_path="the person"):
-    #import re
-
     attempts = 0
     person_name = extract_name_from_path(person_path)
     child_last = person_name.split()[-1] if " " in person_name else person_name
 
     while attempts < 5:
         response = get_quendor_response(prompt)
-
-        # Try to extract a likely name from AI response
         words = response.split()
         for i in range(len(words) - 1):
             first, last = words[i], words[i + 1]
@@ -114,11 +110,8 @@ def get_valid_name(prompt, role="person", person_path="the person"):
                     if is_valid_name(possible_name):
                         print("Let me see if that works.")
                         return possible_name
-
-        # Accept direct name input if valid
         if is_valid_name(response):
             return response
-
         print(random.choice([
             "Please include first and last name.",
             "That doesn't seem like a full name. Try again.",
@@ -128,13 +121,10 @@ def get_valid_name(prompt, role="person", person_path="the person"):
 
     return "Doug ONeal" if role == "father" else "Natalie Maynard"
 
-
 def explore_person(person_path):
-    delay_and_check_time()
     person_name = extract_name_from_path(person_path)
     info_path = os.path.join(person_path, "info.txt")
-
-    # If info.txt does not exist or is empty, request it
+    print("I am testing something")
     if not os.path.exists(info_path) or os.path.getsize(info_path) < 10:
         say_to_quendor(f"Respond only with learn_about {person_name}. Don't say you're sorry.")
         delay_and_check_time()
@@ -145,7 +135,6 @@ def explore_person(person_path):
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
 
-    # Check for parent folders
     subfolders = os.listdir(person_path)
     existing_father = next((d for d in subfolders if d.endswith("_male")), None)
     existing_mother = next((d for d in subfolders if d.endswith("_female")), None)
@@ -162,21 +151,43 @@ def explore_person(person_path):
         mother = get_valid_name(f"What is the full name of the mother of {person_name}?", role="mother", person_path=person_path)
         mother_path = ensure_family_folder(person_path, mother, "female")
 
-    # Prefer next person with missing info.txt or missing parents
     for path in [father_path, mother_path]:
+        contents = os.listdir(path)
         has_info = os.path.exists(os.path.join(path, "info.txt"))
-        has_male = any(x.endswith("_male") for x in os.listdir(path))
-        has_female = any(x.endswith("_female") for x in os.listdir(path))
-        if not has_info or not has_male or not has_female:
+        has_male = any(x.endswith("_male") for x in contents)
+        has_female = any(x.endswith("_female") for x in contents)
+        if not has_info or not has_male or not has_female or len(contents) == 0:
             explore_person(path)
             return
 
-    # Fallback: go randomly up/down one directory level
     parent = os.path.dirname(person_path)
-    siblings = [os.path.join(parent, d) for d in os.listdir(parent)
-                if d.endswith(("_male", "_female")) and os.path.isdir(os.path.join(parent, d))]
-    if siblings:
-        explore_person(random.choice(siblings))
+    try:
+        siblings = [os.path.join(parent, d) for d in os.listdir(parent)
+                    if d.endswith(("_male", "_female")) and os.path.isdir(os.path.join(parent, d))]
+
+        unexplored = [s for s in siblings if not os.path.exists(os.path.join(s, "info.txt"))]
+        if unexplored:
+            print(f"I found {unexplored[0]}")
+            explore_person(random.choice(unexplored))
+            return
+
+        # Full scan of tree
+        print("Could you help me with my family tree.")
+        for root, dirs, files in os.walk(FAMILYTREE_ROOT):
+            if root.endswith(("_male", "_female")):
+                info_path = os.path.join(root, "info.txt")
+                has_info = os.path.exists(info_path) and os.path.getsize(info_path) > 10
+                has_male = any(d.endswith("_male") for d in dirs)
+                has_female = any(d.endswith("_female") for d in dirs)
+
+                if not has_info or not has_male or not has_female or len(dirs) == 0:
+                    print(f"I am looking at: {root}")
+                    explore_person(root)
+                    return
+
+        print("I believe I have finished researching my family tree")
+    except Exception as e:
+        print(f"I had a problem with my code. This is the error I got: {e}")
 
 def main():
     os.makedirs(FAMILYTREE_ROOT, exist_ok=True)
