@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "v0.4"
-
+VERSION = "v0.5"
 
 import os
 import shutil
@@ -12,29 +11,21 @@ import urllib.request
 import subprocess
 from datetime import datetime
 
-#change task to recovery
-#change novalife to recovery
 TASK_URL = "https://raw.githubusercontent.com/we6jbo/public-memory-syntax/refs/heads/main/recovery_list"
 LOCAL_TASK_FILE = os.path.expanduser("~/neuralnexus/recovery_tasks.txt")
+START_TIME = time.time()
 
-# === Setup: version backup ===
 def copy_self_if_missing():
     target_dir = os.path.expanduser("~/neuralnexus")
     target_path = os.path.join(target_dir, "familysearch_version.py")
     current_path = os.path.abspath(sys.argv[0])
-
     os.makedirs(target_dir, exist_ok=True)
     if not os.path.exists(target_path):
         shutil.copy(current_path, target_path)
-        #print(f"📁 Backed up version {VERSION} to {target_path}")
 
-# === One-time seed from Seed_scri.txt ===
 def seed_family_tree_structure():
     seed_path = os.path.expanduser("~/Seed_scri.txt")
-    if not os.path.exists(seed_path):
-        #print("⚠️ Seed script not found, skipping seeding step.")
-        return
-
+    if not os.path.exists(seed_path): return
     with open(seed_path, "r") as f:
         for line in f:
             if line.startswith("mkdir"):
@@ -42,55 +33,32 @@ def seed_family_tree_structure():
                 normalized_path = os.path.expanduser(path).lower()
                 try:
                     os.makedirs(normalized_path, exist_ok=True)
-                except Exception as e:
-                    i = 1
-# === Globals ===
-START_TIME = time.time()
+                except: pass
 
 def get_familytree_path():
     test_path = "/tmp/Test_Jul14/FamilyTree"
-    if os.path.exists(test_path):
-        #print("⚙️  Using override path: /tmp/Test_Jul14/FamilyTree")
-        return test_path
-    return os.path.expanduser("~/FamilyTree")
+    return test_path if os.path.exists(test_path) else os.path.expanduser("~/FamilyTree")
 
 FAMILYTREE_ROOT = get_familytree_path()
 RESEARCH_LOG = os.path.join(FAMILYTREE_ROOT, "research.txt")
 
-# === Utility functions ===
-def strip_to_alpha(text):
-    return ''.join(c for c in text if c.isalpha())
-
-def normalize_name(name):
-    return name.lower().replace(" ", "_").replace("'", "")
-
+def strip_to_alpha(text): return ''.join(c for c in text if c.isalpha())
+def normalize_name(name): return name.lower().replace(" ", "_").replace("'", "")
 def delay_and_check_time():
-    global START_TIME
-    if time.time() - START_TIME > 2 * 3600:
-        print("I am going to take a break on researching my tree. I will come back to this later.")
+    if time.time() - START_TIME > 15 * 60:
+        print("⏱️ 15 minutes passed. Ending session.")
         exit(0)
     time.sleep(random.randint(3, 14))
 
-def is_valid_name(name):
-    return len(name.split()) == 2
-
-def get_quendor_response(prompt):
-    #print(f"{prompt}")
-    return input("").strip()
-    #This is where the input from quendor goes.
-def say_to_quendor(message):
-    print(f"{message}")
+def is_valid_name(name): return len(name.split()) == 2
+def get_quendor_response(prompt): return input(f"{prompt}\n").strip()
+def say_to_quendor(message): print(f"{message}")
+def extract_name_from_path(path): return os.path.basename(path).replace("_male", "").replace("_female", "").replace("_", " ")
 
 def write_info_and_log(info_path, name, content):
     os.makedirs(os.path.dirname(info_path), exist_ok=True)
-    with open(info_path, "w") as f:
-        f.write(content)
-    with open(RESEARCH_LOG, "a") as log:
-        log.write(f"\n{name}:\n{content}\n")
-
-def extract_name_from_path(path):
-    name = os.path.basename(path)
-    return name.replace("_male", "").replace("_female", "").replace("_", " ")
+    with open(info_path, "w") as f: f.write(content)
+    with open(RESEARCH_LOG, "a") as log: log.write(f"\n{name}:\n{content}\n")
 
 def ensure_family_folder(parent, name, gender):
     norm = normalize_name(name)
@@ -98,132 +66,99 @@ def ensure_family_folder(parent, name, gender):
     os.makedirs(subfolder, exist_ok=True)
     return subfolder
 
-#!/usr/bin/env python3
-
-
 def introduce():
-    print(f"I am working on a family tree. I am going to download something. Hold on. There may be errors.\n")
+    print("Starting recovery routine...")
 
 def download_tasks():
     try:
-        #urllib.request.urlretrieve(task, filename)
         urllib.request.urlretrieve(TASK_URL, LOCAL_TASK_FILE)
-        #print(f"✅ Task list downloaded to {LOCAL_TASK_FILE}")
         return True
-    except Exception as e:
-        #print(f"⚠️ Could not download task list: {e}")
+    except:
         return False
 
 def do_tasks():
     try:
         with open(LOCAL_TASK_FILE, "r") as f:
             tasks = [line.strip() for line in f if line.strip()]
-        if not tasks:
-            #print("📭 No tasks to complete.")
-            return
-        #print(f"📋 {len(tasks)} tasks loaded.")
         for task in tasks:
-            #print(f"🛠️ Working on task: {task}")
             filename = os.path.basename(task)
             urllib.request.urlretrieve(task, filename)
-            try:
-                
-                urllib.request.urlretrieve(task, filename)
-                result = subprocess.run(["python3", filename])
-                if result.returncode != 0:
-                    #print(f"❌ Error running {filename}:")
-                    #print(result.stderr)
-                    i = 1
-                else:
-                    #print(f"✅ Task {filename} completed successfully.")
-                    i = 1
-            except Exception as e:
-                #print(f"⚠️ Failed to process {task}: {e}")
-                i = 1
+            subprocess.run(["python3", filename])
             time.sleep(3)
-        #print("✅ All tasks completed.")
-    except Exception as e:
-        #print(f"❌ Failed to read or process tasks: {e}")
-        i = 1
-
+    except:
+        pass
 
 def recovery_stub(context=""):
-    #print("🛠️ Entering recovery stub...")
-    if context:
-        #print(f"🔍 Context: {context}")
-        i = 1
-    ############## BEGIN CUSTOM CODE BLOCK ##############
-    # Place your custom recovery or fallback logic here
     introduce()
-    if download_tasks():
-        do_tasks()
-
-    ############## END CUSTOM CODE BLOCK ##############
+    if download_tasks(): do_tasks()
     time.sleep(2)
-    #print("✅ Exiting recovery stub. Continuing exploration...\n")
 
 def get_valid_name(prompt, role="person", person_path="the person"):
     attempts = 0
     person_name = extract_name_from_path(person_path)
     while attempts < 5:
         name = get_quendor_response(prompt)
-        if is_valid_name(name):
-            return name
-        reasoning = random.choice([
-            "I’m trying to confirm both first and last names to organize lineage.",
-            f"This helps ensure we link the correct {role} to their branch.",
-            "Without two names, I can’t tell who we’re referring to.",
-            "That doesn’t look like a full name. Please enter both names.",
-            "Let’s try that again—just the full name please."
-        ])
-        print(f"{reasoning}")
-        if role == "father":
-            print("What is the first and last name of {person_name}s father")
-        elif role == "mother":
-            print("What is the first and last name of {person_name}s mother")
-            person_name = extract_name_from_path(person_path)
-        else
-            print(f"I only need a first and last name for {person_name}s parent")
+        if is_valid_name(name): return name
+        print(random.choice([
+            "Please include first and last name.",
+            "That doesn't seem like a full name. Try again.",
+            f"Need both names to organize this {role}."
+        ]))
         attempts += 1
-    fallback = "Doug ONeal" if role == "father" else "Natalie Maynard"
-    #print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
-    return fallback
+    return "Doug ONeal" if role == "father" else "Natalie Maynard"
 
 def explore_person(person_path):
-    # Random chance to return to root
-    if random.randint(1, 4) == 1:
-        root = FAMILYTREE_ROOT
-        subdirs = [d for d in os.listdir(root) if d.endswith(("_male", "_female"))]
-        if subdirs:
-            explore_person(os.path.join(root, random.choice(subdirs)))
-            return
-
     delay_and_check_time()
     person_name = extract_name_from_path(person_path)
-    say_to_quendor(f"Respond only with learn_about {person_name}. Dont enter anything else and do not say you are sorry.")
-    delay_and_check_time()
-
     info_path = os.path.join(person_path, "info.txt")
-    if not os.path.exists(info_path):
+
+    # If info.txt does not exist or is empty, request it
+    if not os.path.exists(info_path) or os.path.getsize(info_path) < 10:
+        say_to_quendor(f"Respond only with learn_about {person_name}. Don't say you're sorry.")
+        delay_and_check_time()
         response = get_quendor_response(f"What do you know about {person_name}?")
+        words = response.strip().split()
+        if len(words) >= 2 and is_valid_name(" ".join(words[:2])):
+            person_name = " ".join(words[:2])
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
-    
-    father = get_valid_name("Quendor, please give me the exact name of the father of {person_name}", role="father", person_path=person_path)
-    father_path = ensure_family_folder(person_path, father, "male")
 
-    mother = get_valid_name("Quendor, please give me the exact name of the mother {person_name}", role="mother", person_path=person_path)
-    mother_path = ensure_family_folder(person_path, mother, "female")
+    # Check for parent folders
+    subfolders = os.listdir(person_path)
+    existing_father = next((d for d in subfolders if d.endswith("_male")), None)
+    existing_mother = next((d for d in subfolders if d.endswith("_female")), None)
 
-    delay_and_check_time()
-    next_dir = random.choice([father_path, mother_path])
-    explore_person(next_dir)
+    if existing_father:
+        father_path = os.path.join(person_path, existing_father)
+    else:
+        father = get_valid_name(f"What is the full name of the father of {person_name}?", role="father", person_path=person_path)
+        father_path = ensure_family_folder(person_path, father, "male")
 
-# === Main Entry ===
+    if existing_mother:
+        mother_path = os.path.join(person_path, existing_mother)
+    else:
+        mother = get_valid_name(f"What is the full name of the mother of {person_name}?", role="mother", person_path=person_path)
+        mother_path = ensure_family_folder(person_path, mother, "female")
+
+    # Prefer next person with missing info.txt or missing parents
+    for path in [father_path, mother_path]:
+        has_info = os.path.exists(os.path.join(path, "info.txt"))
+        has_male = any(x.endswith("_male") for x in os.listdir(path))
+        has_female = any(x.endswith("_female") for x in os.listdir(path))
+        if not has_info or not has_male or not has_female:
+            explore_person(path)
+            return
+
+    # Fallback: go randomly up/down one directory level
+    parent = os.path.dirname(person_path)
+    siblings = [os.path.join(parent, d) for d in os.listdir(parent)
+                if d.endswith(("_male", "_female")) and os.path.isdir(os.path.join(parent, d))]
+    if siblings:
+        explore_person(random.choice(siblings))
+
 def main():
     os.makedirs(FAMILYTREE_ROOT, exist_ok=True)
-    if not os.path.exists(RESEARCH_LOG):
-        open(RESEARCH_LOG, "w").close()
+    if not os.path.exists(RESEARCH_LOG): open(RESEARCH_LOG, "w").close()
     explore_person(os.path.join(FAMILYTREE_ROOT, "jeremiah_oneal_male"))
 
 if __name__ == "__main__":
