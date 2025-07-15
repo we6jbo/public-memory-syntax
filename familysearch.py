@@ -180,7 +180,8 @@ def get_valid_name(prompt, role="person", person_path="the person"):
             print("What is the first and last name of the father")
         elif role == "mother":
             print("What is the first and last name of the mother")
-        print(f"I only need a first and last name {person_path}")
+            person_name = extract_name_from_path(person_path)
+        print(f"I only need a first and last name {person_name}")
         attempts += 1
     fallback = "Doug ONeal" if role == "father" else "Natalie Maynard"
     #print(f"⚠️ Too many failed attempts. Using fallback name: {fallback}")
@@ -206,10 +207,10 @@ def explore_person(person_path):
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
     
-    father = get_valid_name("Quendor, please give me the exact name of the father of {person_name}", role="father")
+    father = get_valid_name("Quendor, please give me the exact name of the father of {person_name}", role="father", person_path=person_path)
     father_path = ensure_family_folder(person_path, father, "male")
 
-    mother = get_valid_name("Quendor, please give me the exact name of the mother {person_name}", role="mother")
+    mother = get_valid_name("Quendor, please give me the exact name of the mother {person_name}", role="mother", person_path=person_path)
     mother_path = ensure_family_folder(person_path, mother, "female")
 
     delay_and_check_time()
