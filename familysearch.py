@@ -205,11 +205,11 @@ def explore_person(person_path):
         response = get_quendor_response(f"What do you know about {person_name}?")
         write_info_and_log(info_path, person_name, response)
         delay_and_check_time()
-
-    father = get_valid_name("Quendor, please give me the exact name of the father", role="father", person_name=person_name)
+    
+    father = get_valid_name("Quendor, please give me the exact name of the father of {person_name}", role="father")
     father_path = ensure_family_folder(person_path, father, "male")
 
-    mother = get_valid_name("Quendor, please give me the exact name of the mother", role="mother", person_name=person_name)
+    mother = get_valid_name("Quendor, please give me the exact name of the mother {person_name}", role="mother")
     mother_path = ensure_family_folder(person_path, mother, "female")
 
     delay_and_check_time()
