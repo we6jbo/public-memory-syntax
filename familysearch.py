@@ -94,18 +94,39 @@ def recovery_stub(context=""):
     time.sleep(2)
 
 def get_valid_name(prompt, role="person", person_path="the person"):
+    #import re
+
     attempts = 0
     person_name = extract_name_from_path(person_path)
+    child_last = person_name.split()[-1] if " " in person_name else person_name
+
     while attempts < 5:
-        name = get_quendor_response(prompt)
-        if is_valid_name(name): return name
+        response = get_quendor_response(prompt)
+
+        # Try to extract a likely name from AI response
+        words = response.split()
+        for i in range(len(words) - 1):
+            first, last = words[i], words[i + 1]
+            if first[0].isupper() and last[0].isupper():
+                if last.lower().strip(".,!?") == child_last.lower():
+                    possible_name = f"{first} {last}"
+                    if is_valid_name(possible_name):
+                        print("Let me see if that works.")
+                        return possible_name
+
+        # Accept direct name input if valid
+        if is_valid_name(response):
+            return response
+
         print(random.choice([
             "Please include first and last name.",
             "That doesn't seem like a full name. Try again.",
             f"Need both names to organize this {role}."
         ]))
         attempts += 1
+
     return "Doug ONeal" if role == "father" else "Natalie Maynard"
+
 
 def explore_person(person_path):
     delay_and_check_time()
