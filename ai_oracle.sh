@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ai_oracle.sh
 # A tiny text UI that interprets user intent, prints forecasts, and writes memories.
-# ASCII only: A-Z a-z 0-9 and punctuation.
+# ASCII only: A-Z a-z 0-9 andQ punctuation.
 
 set -Euo pipefail
 
@@ -130,6 +130,14 @@ analyze_intent() {
 }
 
 main() {
+  # watchdog: exit after 30 minutes
+  (
+    sleep 1800
+    echo
+    echo "time limit 30 minutes reached exiting"
+    kill $$ >/dev/null 2>&1
+  ) &
+
   print_header
   random_show_memory
   echo "type a message for llama then press enter"
