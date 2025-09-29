@@ -3,15 +3,7 @@ set -euo pipefail
 
 # ========= Config =========
 TIME_LIMIT_SECONDS=1800  # 30 minutes
-
-# Tune per-group weights (0–100). Higher = more likely.
-# Names must match the keys in GROUP_FILES below.
-declare -A WEIGHTS=(
-  [ops]=80
-  [genealogy]=70
-  [zork]=50
-  [python_mem]=60
-)
+LOG_FILE="/home/ameliahedtkealiceelliott/share_to_reddit.txt"
 
 GROUP_DIR="./groups"
 declare -A GROUP_FILES=(
@@ -20,9 +12,6 @@ declare -A GROUP_FILES=(
   [zork]="$GROUP_DIR/zork.txt"
   [python_mem]="$GROUP_DIR/python_mem.txt"
 )
-
-LOG_FILE="/home/ameliahedtkealiceelliott/share_to_reddit.txt"
-LLAMA="./llama_test.sh"  # must echo the model's answer to stdout
 
 # ========= Time tracking =========
 START_TIME=$(date +%s)
@@ -40,9 +29,7 @@ HDR
   fi
 }
 
-# ========= Validation engine =========
-# Each line in a group file is: QUESTION | CHECK_TYPE | CHECK_PARAM
-# Supported CHECK_TYPE: NONEMPTY, EQUALS, INT_EQ, REGEX, NAME_TWO_WORDS, DOB_MMDDYYYY, CONTAINS
+# ========= Validation =========
 validate_answer() {
   local check="$1"; shift
   local param="$1"; shift
@@ -51,27 +38,16 @@ validate_answer() {
   case "$check" in
     NONEMPTY)
       [[ -n "$resp" ]] && return 0 || { echo "Empty response"; return 1; } ;;
-
     EQUALS)
       [[ "${resp,,}" == "${param,,}" ]] && return 0 || { echo "Expected exactly: $param"; return 1; } ;;
-
     INT_EQ)
       [[ "$resp" =~ ^-?[0-9]+$ ]] && [[ "$resp" -eq "$param" ]] && return 0 || { echo "Expected integer: $param"; return 1; } ;;
-
     REGEX)
       [[ "$resp" =~ $param ]] && return 0 || { echo "Did not match regex: $param"; return 1; } ;;
-
     CONTAINS)
       [[ "${resp,,}" == *"${param,,}"* ]] && return 0 || { echo "Expected substring: $param"; return 1; } ;;
-
-    NAME_TWO_WORDS)
-      if [[ "$resp" =~ ^[A-Za-z][A-Za-z'’-]*[[:space:]][A-Za-z][A-Za-z'’-]*$ ]]; then return 0; else echo "Expected first and last name"; return 1; fi ;;
-
-    DOB_MMDDYYYY)
-      if [[ "$resp" =~ ^(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/[0-9]{4}$ ]]; then return 0; else echo "Expected DOB format MM/DD/YYYY"; return 1; fi ;;
-
     *)
-      echo "Internal config error: unknown check '$check'"; return 1 ;;
+      echo "Unknown check: $check"; return 1 ;;
   esac
 }
 
@@ -81,23 +57,21 @@ run_group_file() {
   local line lineno=0
   ensure_time
 
-  if [[ ! -f "$f" ]]; then echo "Group file not found: $f" >&2; return 1; fi
-
   while IFS='|' read -r raw_q raw_check raw_param || [[ -n "${raw_q:-}" ]]; do
     ensure_time
     ((lineno++))
 
     # Trim spaces
-    q="${raw_q#"${raw_q%%[![:space:]]*}"}";     q="${q%"${q##*[![:space:]]}"}"
+    q="${raw_q#"${raw_q%%[![:space:]]*}"}"; q="${q%"${q##*[![:space:]]}"}"
     check="${raw_check#"${raw_check%%[![:space:]]*}"}"; check="${check%"${check##*[![:space:]]}"}"
     param="${raw_param#"${raw_param%%[![:space:]]*}"}"; param="${param%"${param##*[![:space:]]}"}"
     [[ "${param}" == "-" ]] && param=""
 
-    # Skip blanks / comments
     [[ -z "$q" || "$q" =~ ^# ]] && continue
 
-    # Ask Llama
-    response="$("$LLAMA" "$q" 2>/dev/null || true)"
+    # === Direct interactive input ===
+    echo "=== Question: $q ==="
+    read -p "Type your response: " response
 
     # Validate
     reason=""
@@ -108,7 +82,7 @@ run_group_file() {
     {
       echo "----"
       echo "Question: $q"
-      echo "Llama: $response"
+      echo "Answer: $response"
       if (( status == 0 )); then
         echo "Why wrong: N/A (correct)"
       else
@@ -119,61 +93,12 @@ run_group_file() {
   done < "$f"
 }
 
-# ========= Weighted picker (no repeats) =========
-pick_group_weighted() {
-  # args: a list of group names still remaining
-  local remaining=("$@")
-
-  # If one left, pick it
-  if ((${#remaining[@]}==1)); then echo "${remaining[0]}"; return; fi
-
-  # Try independent hits first
-  local hits=()
-  for g in "${remaining[@]}"; do
-    local w="${WEIGHTS[$g]:-50}"
-    (( RANDOM % 100 < w )) && hits+=("$g")
-  done
-
-  if ((${#hits[@]}==1)); then
-    echo "${hits[0]}"; return
-  fi
-
-  # If none or multiple hit, do a weighted draw among remaining
-  local total=0; for g in "${remaining[@]}"; do total=$((total + ${WEIGHTS[$g]:-50})); done
-  local pick=$(( RANDOM % (total==0 ? 1 : total) ))
-  local acc=0
-  for g in "${remaining[@]}"; do
-    acc=$((acc + ${WEIGHTS[$g]:-50}))
-    if (( pick < acc )); then echo "$g"; return; fi
-  done
-  echo "${remaining[0]}"
-}
-
 # ========= Main =========
 init_log
 
-# Build initial remaining list from keys in GROUP_FILES
-remaining=()
-for g in "${!GROUP_FILES[@]}"; do remaining+=("$g"); done
-
-# Deterministic order of keys can vary; shuffle selection via weighted picker
-while ((${#remaining[@]} > 0)); do
-  ensure_time
-  # Pick by weight
-  choice="$(pick_group_weighted "${remaining[@]}")"
-
-  # Run chosen group
-  case "$choice" in
-    ops)         echo "=== Running: OPS Commands ===";          run_group_file "${GROUP_FILES[ops]}" ;;
-    genealogy)   echo "=== Running: Genealogy Research ===";     run_group_file "${GROUP_FILES[genealogy]}" ;;
-    zork)        echo "=== Running: Zork-like Game ===";         run_group_file "${GROUP_FILES[zork]}" ;;
-    python_mem)  echo "=== Running: Python Memory Check ===";    run_group_file "${GROUP_FILES[python_mem]}" ;;
-    *) echo "Internal error: unknown group '$choice'"; exit 1 ;;
-  esac
-
-  # Remove chosen (no repeats)
-  new=(); for g in "${remaining[@]}"; do [[ "$g" != "$choice" ]] && new+=("$g"); done
-  remaining=("${new[@]}")
+for g in "${!GROUP_FILES[@]}"; do
+  echo "=== Running group: $g ==="
+  run_group_file "${GROUP_FILES[$g]}"
 done
 
-echo "All selected groups completed."
+echo "All groups completed."
