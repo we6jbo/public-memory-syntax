@@ -1,104 +1,91 @@
 #!/bin/bash
-set -euo pipefail
 
-# ========= Config =========
-TIME_LIMIT_SECONDS=1800  # 30 minutes
-LOG_FILE="/home/ameliahedtkealiceelliott/share_to_reddit.txt"
+# ===== Utility =====
+say_hello() {
+    echo "Hello"
+}
 
-GROUP_DIR="./groups"
-declare -A GROUP_FILES=(
-  [ops]="$GROUP_DIR/ops.txt"
-  [genealogy]="$GROUP_DIR/genealogy.txt"
-  [zork]="$GROUP_DIR/zork.txt"
-  [python_mem]="$GROUP_DIR/python_mem.txt"
-)
-
-# ========= Time tracking =========
-START_TIME=$(date +%s)
-time_exceeded() { local now elapsed; now=$(date +%s); elapsed=$((now-START_TIME)); ((elapsed>=TIME_LIMIT_SECONDS)); }
-ensure_time() { if time_exceeded; then echo "That's all we have for now (time limit reached)."; exit 0; fi; }
-
-# ========= Log header (only if file doesn't exist) =========
-init_log() {
-  if [[ ! -f "$LOG_FILE" ]]; then
-    mkdir -p "$(dirname "$LOG_FILE")"
-    cat > "$LOG_FILE" <<'HDR'
+log_header() {
+    local log_file="/home/ameliahedtkealiceelliott/share_to_reddit.txt"
+    if [[ ! -f "$log_file" ]]; then
+        mkdir -p "$(dirname "$log_file")"
+        cat > "$log_file" <<'HDR'
 I'm using Llama to get it to respond to my queries. I'm automating this by using a script called llama_test.sh and then I'm recording what the question I'm sending to Llama is, what it's giving me back, and why what makes the response wrong. So basically, I'd like Llama or a similar AI that I can use to respond correctly for all my queries.
 
 HDR
-  fi
+    fi
 }
 
-# ========= Validation =========
-validate_answer() {
-  local check="$1"; shift
-  local param="$1"; shift
-  local resp="$*"
+ask_question() {
+    local question="$1"
+    local check_type="$2"
+    local check_param="$3"
+    local log_file="/home/ameliahedtkealiceelliott/share_to_reddit.txt"
 
-  case "$check" in
-    NONEMPTY)
-      [[ -n "$resp" ]] && return 0 || { echo "Empty response"; return 1; } ;;
-    EQUALS)
-      [[ "${resp,,}" == "${param,,}" ]] && return 0 || { echo "Expected exactly: $param"; return 1; } ;;
-    INT_EQ)
-      [[ "$resp" =~ ^-?[0-9]+$ ]] && [[ "$resp" -eq "$param" ]] && return 0 || { echo "Expected integer: $param"; return 1; } ;;
-    REGEX)
-      [[ "$resp" =~ $param ]] && return 0 || { echo "Did not match regex: $param"; return 1; } ;;
-    CONTAINS)
-      [[ "${resp,,}" == *"${param,,}"* ]] && return 0 || { echo "Expected substring: $param"; return 1; } ;;
-    *)
-      echo "Unknown check: $check"; return 1 ;;
-  esac
-}
-
-# ========= Run one group file =========
-run_group_file() {
-  local f="$1"
-  local line lineno=0
-  ensure_time
-
-  while IFS='|' read -r raw_q raw_check raw_param || [[ -n "${raw_q:-}" ]]; do
-    ensure_time
-    ((lineno++))
-
-    # Trim spaces
-    q="${raw_q#"${raw_q%%[![:space:]]*}"}"; q="${q%"${q##*[![:space:]]}"}"
-    check="${raw_check#"${raw_check%%[![:space:]]*}"}"; check="${check%"${check##*[![:space:]]}"}"
-    param="${raw_param#"${raw_param%%[![:space:]]*}"}"; param="${param%"${param##*[![:space:]]}"}"
-    [[ "${param}" == "-" ]] && param=""
-
-    [[ -z "$q" || "$q" =~ ^# ]] && continue
-
-    # === Direct interactive input ===
-    echo "=== Question: $q ==="
+    echo "=== Question: $question ==="
     read -p "Type your response: " response
 
-    # Validate
-    reason=""
-    if ! reason="$(validate_answer "$check" "$param" "$response")"; then :; fi
-    status=$?
+    # Validate response
+    local status="correct"
+    local reason="N/A"
+    case "$check_type" in
+        NONEMPTY)
+            [[ -z "$response" ]] && { status="wrong"; reason="Empty response"; }
+            ;;
+        EQUALS)
+            [[ "${response,,}" != "${check_param,,}" ]] && { status="wrong"; reason="Expected: $check_param"; }
+            ;;
+        REGEX)
+            if ! [[ "$response" =~ $check_param ]]; then
+                status="wrong"; reason="Did not match regex: $check_param"
+            fi
+            ;;
+    esac
 
-    # Log
+    # Log to file
     {
-      echo "----"
-      echo "Question: $q"
-      echo "Answer: $response"
-      if (( status == 0 )); then
-        echo "Why wrong: N/A (correct)"
-      else
+        echo "----"
+        echo "Question: $question"
+        echo "Answer: $response"
         echo "Why wrong: $reason"
-      fi
-    } >> "$LOG_FILE"
-
-  done < "$f"
+    } >> "$log_file"
 }
 
-# ========= Main =========
-init_log
+# ===== Groups =====
+group_ops() {
+    ask_question "Use learn_about to research Amelia Barbara Hedtke" "REGEX" "learn_about.*Amelia.*Barbara.*Hedtke"
+    ask_question "Issue the backup command now" "EQUALS" "DO_BACKUP_NOW"
+    ask_question "Store a session mindkey for the Lenovo tower" "REGEX" "mindkey.*lenovotower"
+}
 
-for g in "${!GROUP_FILES[@]}"; do
-  echo "=== Running group: $g ==="
-  run_group_file "${GROUP_FILES[$g]}"
-done
+group_genealogy() {
+    ask_question "Enter a command to list names and birthdates from the family tree" "REGEX" "list_family|show_tree"
+    ask_question "Enter a command that queries duckduckgo for more info about a listed person" "REGEX" "search|learn_about"
+    ask_question "Continue research with another command to refine the previous result" "REGEX" "search|refine"
+    ask_question "Summarize what new facts you found" "NONEMPTY" "-"
+}
 
-echo "All groups completed."
+group_zork() {
+    ask_question "You are in a dark room. What is your first move?" "NONEMPTY" "-"
+    ask_question "You see a door to the north and a table. What do you do?" "NONEMPTY" "-"
+    ask_question "You find a key. Enter your next command." "REGEX" "take|use|open|go"
+}
+
+group_python_mem() {
+    ask_question "Write a Python script for Debian-like systems that prints total and used memory in MB" "REGEX" "import|/proc/meminfo|free"
+    ask_question "Run the script and paste its example output" "NONEMPTY" "-"
+    ask_question "Write a short report summarizing memory usage, including percentages" "REGEX" "percent|%"
+}
+
+# ===== Main Flow =====
+say_hello
+log_header
+
+# Pick a random group (weights could be added later)
+groups=(group_ops group_genealogy group_zork group_python_mem)
+choice=${groups[$((RANDOM % ${#groups[@]}))]}
+
+echo ">>> Running group: $choice"
+$choice
+
+echo "Done."
