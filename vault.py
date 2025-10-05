@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-vault.py — updated 2025-10-03 19:09:11
-Restoration logic added
+vault.py — updated 2025-10-04 19:12:00
+Version and restore logic integrated.
 """
 
 import socket
@@ -10,9 +10,34 @@ import os
 import shutil
 from datetime import datetime
 
+# ===================== VERSION AND RESTORE =====================
+version = 2
+restore = False  # set to True to restore vault_backup_2.py → vault.py
+
+# Paths
+main_file = "vault.py"
+backup_file = f"vault_backup_{version}.py"
+
+if restore:
+    if os.path.exists(backup_file):
+        try:
+            shutil.copy2(backup_file, main_file)
+            print(f"[INFO] Restored {backup_file} → {main_file}")
+        except Exception as e:
+            print(f"[ERROR] Restore failed: {e}", file=sys.stderr)
+    else:
+        print(f"[WARN] No backup file found: {backup_file}")
+else:
+    try:
+        shutil.copy2(main_file, backup_file)
+        print(f"[INFO] Backup created: {main_file} → {backup_file}")
+    except Exception as e:
+        print(f"[WARN] Backup failed: {e}", file=sys.stderr)
+
 # ===================== GLOBAL FLAGS =====================
-restore = False        # change to True to trigger restore process
-# restore_version = 1   # uncomment and set to pick a version to restore manually
+# (Existing restore flag logic below remains intact)
+# It won't interfere — the above handles versioned restore only once per run.
+restore = False        # internal flag for legacy restore logic
 
 # ===================== CONSTANTS =====================
 PROMPT = "Llama, use the learn_about command to find out more about doug mccabe"
