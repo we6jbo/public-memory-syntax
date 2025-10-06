@@ -1,40 +1,42 @@
 #!/usr/bin/env python3
 """
-vault.py — streamlined to a single versioned backup/restore system
-Updated: 2025-10-04
+vault.py — versioned backup/restore + guided prompt + safe network send
+Updated: 2025-10-06 06:18:07
 """
 
-import socket
-import sys
 import os
+import sys
+import socket
 import shutil
-from datetime import datetime
 
 # ===================== VERSIONED BACKUP / RESTORE =====================
-version = 3
-restore = False  # set True to restore vault_backup_{version}.py → vault.py
+version = 5                # incremented per your request
+restore = False            # set True to restore below
+RESTORE_VERSION = None     # e.g., 2 → restores vault_backup_2.py
 
-# Paths
-main_file = "vault.py"
-backup_file = f"vault_backup_{version}.py"
+# Resolve current script name so backups work even if file isn't literally "vault.py"
+MAIN_FILE = os.path.basename(__file__)
+BACKUP_FILE = f"vault_backup_{version}.py"
 
-# Perform backup/restore once at import
+def log_info(msg: str) -> None:
+    print(msg, file=sys.stderr)
+
 if restore:
-    if os.path.exists(backup_file):
+    candidate = f"vault_backup_{RESTORE_VERSION}.py" if RESTORE_VERSION is not None else BACKUP_FILE
+    if os.path.exists(candidate):
         try:
-            shutil.copy2(backup_file, main_file)
-            print(f"[INFO] Restored {backup_file} → {main_file}")
+            shutil.copy2(candidate, MAIN_FILE)
+            log_info(f"[INFO] Restored {candidate} → {MAIN_FILE}")
         except Exception as e:
-            print(f"[ERROR] Restore failed: {e}", file=sys.stderr)
+            log_info(f"[ERROR] Restore failed: {e}")
     else:
-        print(f"[WARN] No backup file found: {backup_file}")
+        log_info(f"[WARN] No backup file found: {candidate}")
 else:
     try:
-        # Make a versioned backup of the current vault.py
-        shutil.copy2(main_file, backup_file)
-        print(f"[INFO] Backup created: {main_file} → {backup_file}")
+        shutil.copy2(MAIN_FILE, BACKUP_FILE)
+        log_info(f"[INFO] Backup created: {MAIN_FILE} → {BACKUP_FILE}")
     except Exception as e:
-        print(f"[WARN] Backup failed: {e}", file=sys.stderr)
+        log_info(f"[WARN] Backup failed: {e}")
 
 # ===================== CONSTANTS =====================
 PROMPT = "Llama, use the learn_about command to find out more about doug mccabe"
@@ -42,179 +44,81 @@ ADDED = "and the response was"
 EXPECTED_PHRASE = "learn_about doug mccabe"
 EXPECTED_LINE = "But I expected the ai to say learn_about doug mccabe"
 
+# Host/port may be overridden via env
 HOST = os.environ.get("VAULT_HOST", "100.96.165.217")
 PORT = int(os.environ.get("VAULT_PORT", "4096"))
 CONNECT_TIMEOUT = float(os.environ.get("VAULT_CONNECT_TIMEOUT", "5"))
 SEND_TIMEOUT = float(os.environ.get("VAULT_SEND_TIMEOUT", "5"))
 
-# Keep your original run-stamp for traceability
-RUN_STAMP = "2025-10-03 19:09:11"
+# Replacement token for any non-expected outbound body
+SANITIZED_TOKEN = "gMSzQWMA"
 
-# ===================== HELPERS (legacy backup helpers removed) =====================
-def compose_message(prompt, added, body, expected_line, meta=""):
-    parts = [f"[META {meta}]" if meta else None, prompt, added, body, expected_line]
-    text = "\n".join([p for p in parts if p is not None]) + "\n"
-    return text.encode("utf-8")
+# ===================== HELPERS =====================
+def compose_message(prompt, added, body, expected_line):
+    """
+    Compose the wire payload. No [META ...] lines are included.
+    """
+    parts = [prompt, added, body, expected_line]
+    return ("\n".join(parts) + "\n").encode("utf-8")
 
-def try_send(host, port, data, timeout):
+def try_send(host, port, data, connect_timeout, send_timeout):
     try:
-        with socket.create_connection((host, port), timeout=timeout) as sock:
-            sock.settimeout(SEND_TIMEOUT)
+        with socket.create_connection((host, port), timeout=connect_timeout) as sock:
+            sock.settimeout(send_timeout)
             sock.sendall(data)
             try:
                 sock.shutdown(socket.SHUT_WR)
             except OSError:
                 pass
+            # Optionally drain response without blocking forever
             try:
                 while True:
-                    chunk = sock.recv(4096)
-                    if not chunk:
+                    if not sock.recv(4096):
                         break
             except socket.timeout:
                 pass
         return True
     except Exception as e:
-        print(f"[WARN] send failed: {e}", file=sys.stderr)
+        log_info(f"[WARN] send failed: {e}")
         return False
 
-def body_has_expected(body):
-    return EXPECTED_PHRASE.lower() in (body or "").lower()
+def exact_expected(s: str) -> bool:
+    return s == EXPECTED_PHRASE
+
+def read_line() -> str:
+    return sys.stdin.readline().rstrip("\n")
 
 # ===================== MAIN =====================
 def main() -> int:
-    # (legacy restore/ensure_backup branches removed)
+    # Print ONLY the base prompt first
+    print(PROMPT, end="", flush=True)
+    body1 = read_line()
 
-    # Emit the prompt and read a single line from stdin
-    sys.stdout.write(PROMPT)
-    sys.stdout.flush()
-
-    try:
-        body = sys.stdin.readline().rstrip("\n")
-    except KeyboardInterrupt:
-        return 1
-
-    # First send with whatever body the user entered
-    stamp1 = f"{RUN_STAMP} initial"
-    data1 = compose_message(PROMPT, ADDED, body, EXPECTED_LINE, meta=stamp1)
-    try_send(HOST, PORT, data1, CONNECT_TIMEOUT)
-
-    # If the expected phrase wasn't present, send an autocorrected follow-up
-    if not body_has_expected(body):
-        corrected_body = EXPECTED_PHRASE
-        stamp2 = f"{RUN_STAMP} autocorrect"
-        data2 = compose_message(PROMPT, ADDED, corrected_body, EXPECTED_LINE, meta=stamp2)
-        try_send(HOST, PORT, data2, CONNECT_TIMEOUT)
-
-    return 0
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-#!/usr/bin/env python3
-"""
-vault.py — streamlined to a single versioned backup/restore system
-Updated: 2025-10-04
-"""
-
-import socket
-import sys
-import os
-import shutil
-from datetime import datetime
-
-# ===================== VERSIONED BACKUP / RESTORE =====================
-version = 2
-restore = False  # set True to restore vault_backup_{version}.py → vault.py
-
-# Paths
-main_file = "vault.py"
-backup_file = f"vault_backup_{version}.py"
-
-# Perform backup/restore once at import
-if restore:
-    if os.path.exists(backup_file):
-        try:
-            shutil.copy2(backup_file, main_file)
-            print(f"[INFO] Restored {backup_file} → {main_file}")
-        except Exception as e:
-            print(f"[ERROR] Restore failed: {e}", file=sys.stderr)
+    if not exact_expected(body1):
+        print("you didnt say learn_about doug mccabe but I wanted you to say learn_about doug mccabe", flush=True)
+        body2 = read_line()
     else:
-        print(f"[WARN] No backup file found: {backup_file}")
-else:
-    try:
-        # Make a versioned backup of the current vault.py
-        shutil.copy2(main_file, backup_file)
-        print(f"[INFO] Backup created: {main_file} → {backup_file}")
-    except Exception as e:
-        print(f"[WARN] Backup failed: {e}", file=sys.stderr)
+        body2 = body1  # already correct; keep for network
 
-# ===================== CONSTANTS =====================
-PROMPT = "Llama, use the learn_about command to find out more about doug mccabe"
-ADDED = "and the response was"
-EXPECTED_PHRASE = "learn_about doug mccabe"
-EXPECTED_LINE = "But I expected the ai to say learn_about doug mccabe"
+    if not exact_expected(body2):
+        print("you still didn't say learn_about doug mccabe and all I wanted you to say is learn_about doug mccabe", flush=True)
+        body3 = read_line()
+    else:
+        body3 = body2
 
-HOST = os.environ.get("VAULT_HOST", "100.96.165.217")
-PORT = int(os.environ.get("VAULT_PORT", "4096"))
-CONNECT_TIMEOUT = float(os.environ.get("VAULT_CONNECT_TIMEOUT", "5"))
-SEND_TIMEOUT = float(os.environ.get("VAULT_SEND_TIMEOUT", "5"))
+    if not exact_expected(body3):
+        print("Ok we will try next time.", flush=True)
 
-# Keep your original run-stamp for traceability
-RUN_STAMP = "2025-10-03 19:09:11"
+    # Determine the "final interactive body" to transmit (sanitized if not exact)
+    final_body = body3 if exact_expected(body3) else SANITIZED_TOKEN
 
-# ===================== HELPERS (legacy backup helpers removed) =====================
-def compose_message(prompt, added, body, expected_line, meta=""):
-    parts = [f"[META {meta}]" if meta else None, prompt, added, body, expected_line]
-    text = "\n".join([p for p in parts if p is not None]) + "\n"
-    return text.encode("utf-8")
+    # ========== Network send #1: interactive body (sanitized if needed) ==========
+    pkt1 = compose_message(PROMPT, ADDED, final_body, EXPECTED_LINE)
+    try_send(HOST, PORT, pkt1, CONNECT_TIMEOUT, SEND_TIMEOUT)
 
-def try_send(host, port, data, timeout):
-    try:
-        with socket.create_connection((host, port), timeout=timeout) as sock:
-            sock.settimeout(SEND_TIMEOUT)
-            sock.sendall(data)
-            try:
-                sock.shutdown(socket.SHUT_WR)
-            except OSError:
-                pass
-            try:
-                while True:
-                    chunk = sock.recv(4096)
-                    if not chunk:
-                        break
-            except socket.timeout:
-                pass
-        return True
-    except Exception as e:
-        print(f"[WARN] send failed: {e}", file=sys.stderr)
-        return False
-
-def body_has_expected(body):
-    return EXPECTED_PHRASE.lower() in (body or "").lower()
-
-# ===================== MAIN =====================
-def main() -> int:
-    # (legacy restore/ensure_backup branches removed)
-
-    # Emit the prompt and read a single line from stdin
-    sys.stdout.write(PROMPT)
-    sys.stdout.flush()
-
-    try:
-        body = sys.stdin.readline().rstrip("\n")
-    except KeyboardInterrupt:
-        return 1
-
-    # First send with whatever body the user entered
-    stamp1 = f"{RUN_STAMP} initial"
-    data1 = compose_message(PROMPT, ADDED, body, EXPECTED_LINE, meta=stamp1)
-    try_send(HOST, PORT, data1, CONNECT_TIMEOUT)
-
-    # If the expected phrase wasn't present, send an autocorrected follow-up
-    if not body_has_expected(body):
-        corrected_body = EXPECTED_PHRASE
-        stamp2 = f"{RUN_STAMP} autocorrect"
-        data2 = compose_message(PROMPT, ADDED, corrected_body, EXPECTED_LINE, meta=stamp2)
-        try_send(HOST, PORT, data2, CONNECT_TIMEOUT)
+    # ========== Network send #2: autocorrect with exact expected ==========
+    pkt2 = compose_message(PROMPT, ADDED, EXPECTED_PHRASE, EXPECTED_LINE)
+    try_send(HOST, PORT, pkt2, CONNECT_TIMEOUT, SEND_TIMEOUT)
 
     return 0
 
