@@ -2,14 +2,18 @@ import socket
 import requests
 import re
 
-# Load print statements from file
-with open("Print-statements.txt", "r") as f:
-    print_lines = [line.strip() for line in f if line.strip()]
+# Print lines embedded directly in the script
+print_lines = [
+    "I'm going to do research on {subject}.",
+    "Give me a search query I can type into DuckDuckGo that will give me more information about {subject}. Do not write more than 10 words for this search query",
+    "You entered more than 10 words. Keep it to less than 10 words please. I need a search query.",
+    "Could you summarize the results from this duckduckgo response. Here's the response."
+]
 
-# Names and people to iterate over
+# Subjects to iterate through
 people = [
     "Robert Burke Maynard born September 16, 1928 in Sebring, Florida",
-    "Betty S. Maynard",
+    "Betty S. Maynard from San Diego, California",
     "Emzy B. Maynard born 1917",
     "John Maynard born 1891",
     "Gordon Maynard born 1857 Pike County, Kentucky",
@@ -19,23 +23,24 @@ people = [
 current_index = 0
 
 while True:
-    # Step 1: Print only allowed lines
-    for line in print_lines:
-        print(line)
+    # Replace subject tokens in print lines
+    subject = people[current_index]
+    print(print_lines[0].format(subject=subject))
+    print(print_lines[1].format(subject=subject))
 
     # Step 2: Ask user for search query
     while True:
         query = input("\nSearch query: ")
         if len(re.findall(r'\w+', query)) > 10:
-            print("You entered more than 10 words. Keep it to less than 10 words please. I need a search query.")
+            print(print_lines[2])
         else:
             break
 
     # Step 3: Perform DuckDuckGo search
-    print("\nCould you summarize the results from this duckduckgo response. Here's the response.")
+    print("\n" + print_lines[3])
     try:
         response = requests.get(f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}")
-        snippet = re.findall(r'<a.*?class="result__a".*?>(.*?)</a>', response.text)
+        snippet = re.findall(r'<a.*?class=\"result__a\".*?>(.*?)</a>', response.text)
         if snippet:
             for i, result in enumerate(snippet[:3], 1):
                 print(f"[{i}] {re.sub('<.*?>', '', result)}")
@@ -59,4 +64,3 @@ while True:
     # Step 6: Cycle to next person
     current_index = (current_index + 1) % len(people)
     print("\n--- NEXT SEARCH SUBJECT ---")
-    print(f"I'm going to do research on {people[current_index]}\n")
