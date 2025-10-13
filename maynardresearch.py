@@ -20,23 +20,19 @@ people = [
     "William Riley Maynard born December 13, 1878"
 ]
 
-DDG_RESULTS = 3          # how many results to show each search
+DDG_RESULTS = 3
 REMOTE_IP = "100.96.165.217"
 REMOTE_PORT = 4162
 # ---------------------------------------------------
 
 def word_count_ok(s: str, limit: int = 10) -> bool:
-    return len(re.findall(r"\\w+", s)) <= limit
+    return len(re.findall(r"\w+", s)) <= limit
 
 def ddg_text_search(query: str, n: int = DDG_RESULTS):
     """Return top n DuckDuckGo results using duckpy."""
     ddg = Client()
     results = ddg.search(query)
-    out = []
-    for r in results[:n]:
-        # each r is a dict with keys 'title', 'url', 'description'
-        out.append((r.get("title"), r.get("url"), r.get("description")))
-    return out
+    return results[:n]
 
 def main():
     current_index = 0
@@ -45,39 +41,42 @@ def main():
         print(print_lines[0].format(subject=subject))
         print(print_lines[1].format(subject=subject))
 
-        # enforce ≤10 words
+        # Enforce <=10 words
         while True:
-            query = input("\\nSearch query: ")
+            query = input("\nSearch query: ")
             if not word_count_ok(query, 10):
                 print(print_lines[2])
                 continue
             break
 
-        print("\\n" + print_lines[3])
+        print("\n" + print_lines[3])
 
         try:
             results = ddg_text_search(query, n=DDG_RESULTS)
             if results:
-                for i, (title, url, desc) in enumerate(results, 1):
-                    print(f\"[{i}] {title}\\n   {url}\\n   {desc}\\n\")
+                for i, r in enumerate(results, 1):
+                    title = r.get("title", "")
+                    url = r.get("url", "")
+                    desc = r.get("description", "")
+                    print(f"[{i}] {title}\n   {url}\n   {desc}\n")
             else:
-                print(\"No results found.\")
+                print("No results found.")
         except Exception as e:
-            print(f\"Search failed: {e}\")
+            print(f"Search failed: {e}")
 
         # Ask for follow-up to send to remote
-        user_response = input(\". Can you summarize this: \")
+        user_response = input(". Can you summarize this: ")
 
         # Send to specified IP and port
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((REMOTE_IP, REMOTE_PORT))
-                s.sendall(user_response.encode(\"utf-8\"))
+                s.sendall(user_response.encode("utf-8"))
         except Exception as e:
-            print(f\"Failed to send to server: {e}\")
+            print(f"Failed to send to server: {e}")
 
         current_index = (current_index + 1) % len(people)
-        print(\"\\n--- NEXT SEARCH SUBJECT ---\\n\")
+        print("\n--- NEXT SEARCH SUBJECT ---\n")
 
-if __name__ == \"__main__\":
+if __name__ == "__main__":
     main()
