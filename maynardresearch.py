@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 import socket
-import requests
 import re
+from duckduckgo_search import DDGS
 
 # Print lines embedded directly in the script
 print_lines = [
@@ -20,47 +21,68 @@ people = [
     "William Riley Maynard born December 13, 1878"
 ]
 
-current_index = 0
+def ddg_text_search(q: str, n: int = 3):
+    # Returns up to n text results (title + url). No HTML parsing.
+    out = []
+    with DDGS() as ddgs:
+        for r in ddgs.text(q, region="us-en", safesearch="moderate", max_results=n):
+            # r keys: 'title', 'href', 'body'
+            title = (r.get("title") or "").strip()
+            href = (r.get("href") or "").strip()
+            body = (r.get("body") or "").strip()
+            out.append((title, href, body))
+    return out
 
-while True:
-    # Replace subject tokens in print lines
-    subject = people[current_index]
-    print(print_lines[0].format(subject=subject))
-    print(print_lines[1].format(subject=subject))
+def word_count_ok(s: str, limit: int = 10) -> bool:
+    return len(re.findall(r"\w+", s)) <= limit
 
-    # Step 2: Ask user for search query
+def main():
+    current_index = 0
     while True:
-        query = input("\nSearch query: ")
-        if len(re.findall(r'\w+', query)) > 10:
-            print(print_lines[2])
-        else:
+        subject = people[current_index]
+
+        # Only print the defined lines
+        print(print_lines[0].format(subject=subject))
+        print(print_lines[1].format(subject=subject))
+
+        # Enforce <= 10 words
+        while True:
+            query = input("\nSearch query: ")
+            if not word_count_ok(query, 10):
+                print(print_lines[2])
+                continue
             break
 
-    # Step 3: Perform DuckDuckGo search
-    print("\n" + print_lines[3])
-    try:
-        response = requests.get(f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}")
-        snippet = re.findall(r'<a.*?class=\"result__a\".*?>(.*?)</a>', response.text)
-        if snippet:
-            for i, result in enumerate(snippet[:3], 1):
-                print(f"[{i}] {re.sub('<.*?>', '', result)}")
-        else:
-            print("No results found.")
-    except Exception as e:
-        print(f"Search failed: {e}")
+        print("\n" + print_lines[3])
 
-    # Step 4: Ask for user response to send to remote
-    user_response = input("\nEnter a follow-up to send to 100.96.165.217:4162: ")
+        try:
+            results = ddg_text_search(query, n=3)
+            if results:
+                for i, (title, href, body) in enumerate(results, 1):
+                    # Keep output succinct but useful
+                    print(f"[{i}] {title} — {href}")
+                    if body:
+                        print(f"    {body}")
+            else:
+                print("No results found.")
+        except Exception as e:
+            # Keep errors minimal so you still “only print your lines + results”
+            print(f"Search failed.")
 
-    # Step 5: Send to specified IP and port
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(("100.96.165.217", 4162))
-            s.sendall(user_response.encode('utf-8'))
-            print("Sent successfully.")
-    except Exception as e:
-        print(f"Failed to send to server: {e}")
+        # Ask for follow-up to send to remote
+        user_response = input(". Can you summarize this: ")
 
-    # Step 6: Cycle to next person
-    current_index = (current_index + 1) % len(people)
-    print("\n--- NEXT SEARCH SUBJECT ---")
+        # Send to specified IP and port
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(("100.96.165.217", 4162))
+                s.sendall(user_response.encode("utf-8"))
+        except Exception:
+            # Quiet failure per your “only print needed lines” style
+            pass
+
+        # Next subject
+        current_index = (current_index + 1) % len(people)
+
+if __name__ == "__main__":
+    main()
