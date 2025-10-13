@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import socket
 import re
-from duckduckgo_search import DDGS
+from duckpy import Client
 
-# Print lines embedded directly in the script
+# --------------------- CONFIG ---------------------
 print_lines = [
     "I'm going to do research on {subject}.",
     "Give me a search query I can type into DuckDuckGo that will give me more information about {subject}. Do not write more than 10 words for this search query",
@@ -11,7 +11,6 @@ print_lines = [
     "Could you summarize the results from this duckduckgo response. Here's the response."
 ]
 
-# Subjects to iterate through
 people = [
     "Robert Burke Maynard born September 16, 1928 in Sebring, Florida",
     "Betty S. Maynard from San Diego, California",
@@ -21,68 +20,64 @@ people = [
     "William Riley Maynard born December 13, 1878"
 ]
 
-def ddg_text_search(q: str, n: int = 3):
-    # Returns up to n text results (title + url). No HTML parsing.
-    out = []
-    with DDGS() as ddgs:
-        for r in ddgs.text(q, region="us-en", safesearch="moderate", max_results=n):
-            # r keys: 'title', 'href', 'body'
-            title = (r.get("title") or "").strip()
-            href = (r.get("href") or "").strip()
-            body = (r.get("body") or "").strip()
-            out.append((title, href, body))
-    return out
+DDG_RESULTS = 3          # how many results to show each search
+REMOTE_IP = "100.96.165.217"
+REMOTE_PORT = 4162
+# ---------------------------------------------------
 
 def word_count_ok(s: str, limit: int = 10) -> bool:
-    return len(re.findall(r"\w+", s)) <= limit
+    return len(re.findall(r"\\w+", s)) <= limit
+
+def ddg_text_search(query: str, n: int = DDG_RESULTS):
+    """Return top n DuckDuckGo results using duckpy."""
+    ddg = Client()
+    results = ddg.search(query)
+    out = []
+    for r in results[:n]:
+        # each r is a dict with keys 'title', 'url', 'description'
+        out.append((r.get("title"), r.get("url"), r.get("description")))
+    return out
 
 def main():
     current_index = 0
     while True:
         subject = people[current_index]
-
-        # Only print the defined lines
         print(print_lines[0].format(subject=subject))
         print(print_lines[1].format(subject=subject))
 
-        # Enforce <= 10 words
+        # enforce ≤10 words
         while True:
-            query = input("\nSearch query: ")
+            query = input("\\nSearch query: ")
             if not word_count_ok(query, 10):
                 print(print_lines[2])
                 continue
             break
 
-        print("\n" + print_lines[3])
+        print("\\n" + print_lines[3])
 
         try:
-            results = ddg_text_search(query, n=3)
+            results = ddg_text_search(query, n=DDG_RESULTS)
             if results:
-                for i, (title, href, body) in enumerate(results, 1):
-                    # Keep output succinct but useful
-                    print(f"[{i}] {title} — {href}")
-                    if body:
-                        print(f"    {body}")
+                for i, (title, url, desc) in enumerate(results, 1):
+                    print(f\"[{i}] {title}\\n   {url}\\n   {desc}\\n\")
             else:
-                print("No results found.")
+                print(\"No results found.\")
         except Exception as e:
-            # Keep errors minimal so you still “only print your lines + results”
-            print(f"Search failed.")
+            print(f\"Search failed: {e}\")
 
         # Ask for follow-up to send to remote
-        user_response = input(". Can you summarize this: ")
+        user_response = input(\". Can you summarize this: \")
 
         # Send to specified IP and port
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect(("100.96.165.217", 4162))
-                s.sendall(user_response.encode("utf-8"))
-        except Exception:
-            # Quiet failure per your “only print needed lines” style
-            pass
+                s.connect((REMOTE_IP, REMOTE_PORT))
+                s.sendall(user_response.encode(\"utf-8\"))
+        except Exception as e:
+            print(f\"Failed to send to server: {e}\")
 
-        # Next subject
         current_index = (current_index + 1) % len(people)
+        print(\"\\n--- NEXT SEARCH SUBJECT ---\\n\")
 
-if __name__ == "__main__":
+if __name__ == \"__main__\":
     main()
