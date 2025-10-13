@@ -20,7 +20,7 @@ people = [
     "William Riley Maynard born December 13, 1878"
 ]
 
-DDG_RESULTS = 3
+DDG_RESULTS = 5
 REMOTE_IP = "100.96.165.217"
 REMOTE_PORT = 4162
 # ---------------------------------------------------
@@ -29,9 +29,12 @@ def word_count_ok(s: str, limit: int = 10) -> bool:
     return len(re.findall(r"\w+", s)) <= limit
 
 def ddg_text_search(query: str, n: int = DDG_RESULTS):
-    """Return top n DuckDuckGo results using duckpy."""
+    """Run a DuckDuckGo query that prefers exact-match results for names."""
     ddg = Client()
     results = ddg.search(query)
+    # if nothing found and the query isn't quoted, retry quoted version
+    if not results and not (query.startswith('"') and query.endswith('"')):
+        results = ddg.search(f'"{query}"')
     return results[:n]
 
 def main():
@@ -43,7 +46,7 @@ def main():
 
         # Enforce <=10 words
         while True:
-            query = input("\nSearch query: ")
+            query = input("\nSearch query: ").strip()
             if not word_count_ok(query, 10):
                 print(print_lines[2])
                 continue
