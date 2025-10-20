@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 vault.py — versioned backup/restore + guided prompt + safe network send
-Updated: 2025-10-11 06:44:17
+Updated: 2025-10-20 06:22:26
 """
 
 import os
@@ -10,7 +10,7 @@ import socket
 import shutil
 
 # ===================== VERSIONED BACKUP / RESTORE =====================
-version = 8                 # bumped to match the (8) copy
+version = 9                 # bumped for 2025-10-20
 restore = False             # set True to restore below
 RESTORE_VERSION = None      # e.g., 2 → restores vault_backup_2.py
 
@@ -40,7 +40,8 @@ else:
         log_info(f"[WARN] Backup failed: {e}")
 
 # ===================== CONSTANTS =====================
-PROMPT = "Llama, use the learn_about command to find out more about doug mccabe"
+# NOTE: Matches your literal print line, including the leading colon + space
+PROMPT = ": Llama, use the learn_about command to find out more about doug mccabe"
 ADDED = "and the response was"
 EXPECTED_PHRASE = "learn_about doug mccabe"
 EXPECTED_LINE = "But I expected the ai to say learn_about doug mccabe"
@@ -84,7 +85,7 @@ def try_send(host, port, data, connect_timeout, send_timeout):
         return False
 
 def exact_expected(s: str) -> bool:
-    return s == EXPECTED_PHRASE
+    return s == EXPECTED_PHRASE  # strict exact match
 
 def read_line() -> str:
     return sys.stdin.readline().rstrip("\n")
@@ -109,7 +110,7 @@ def nudge_message(attempt: int, last_input: str) -> str:
 
 # ===================== MAIN =====================
 def main() -> int:
-    # Print ONLY the base prompt first
+    # Print ONLY the base prompt first (exact literal form)
     print(PROMPT, end="", flush=True)
 
     # Up to three tries to capture the exact phrase
