@@ -1,0 +1,22 @@
+{
+  "project": "membership13",
+  "purpose": "Restore configuration for the Interfaith Intro Builder.",
+  "storage_dir": "/home/we6jbo/.interfaith",
+  "pii_dir": "/home/we6jbo/.restore-interfaith-pii",
+  "github_raw_base": "https://raw.githubusercontent.com/we6jbo/public-memory-syntax/refs/heads/main/",
+  "restore_files": [
+    "interfaith_intro_builder.py",
+    "interfaith_intro_config.json",
+    "interfaith_questions.json",
+    "interfaith_sources.json"
+  ],
+  "privacy_rule": "Public GitHub files must not contain phone numbers, street addresses, medical records, full DOB, or private identity documents. Put private details in /home/we6jbo/.restore-interfaith-pii instead.",
+  "safe_public_intro_focus": [
+    "San Diego background",
+    "science-first / atheist interest in religion",
+    "baptism certificate text as a personal historical document",
+    "evolution of belief, ritual, symbolic meaning, Lion Man, and Eastern religions",
+    "cybersecurity and technology background",
+    "family-tree research and Lutheran family-history context"
+  ]
+}
