@@ -1,0 +1,44 @@
+{
+  "project": "membership13",
+  "public_sources_and_research_lanes": [
+    {
+      "lane": "baptism_certificate_text",
+      "core_text": "By Baptism God has made you a member of the holy Christian church.",
+      "safe_argument": "The certificate is the direct evidence that a religious institution permanently recorded God-language and church-belonging language about Jeremiah."
+    },
+    {
+      "lane": "interpretive_claim",
+      "core_text": "Jeremiah O'Neal will always, now and forever, have one foot in the God mentioned in the 1983 certificate's church, and that foot would remain there forever.",
+      "safe_argument": "This is an interpretation of the certificate text, not a claim that archaeology proves Lutheran doctrine."
+    },
+    {
+      "lane": "evolution_of_religion",
+      "topics": [
+        "early Homo sapiens",
+        "symbolic behavior",
+        "ritual",
+        "burial practices",
+        "theory of mind",
+        "agency detection",
+        "Lion Man",
+        "sacred imagination",
+        "Eastern religions"
+      ]
+    },
+    {
+      "lane": "genealogy_context",
+      "topics": [
+        "family-tree research since about 2008",
+        "John McCabe",
+        "Alice Elliott",
+        "Archie Smith",
+        "Polly Bowman",
+        "Burke Maynard",
+        "Amelia Hedtke",
+        "Percy Shapley",
+        "Minnie Schlorff",
+        "Bowman Lutheran family-history context"
+      ]
+    }
+  ]
+}
