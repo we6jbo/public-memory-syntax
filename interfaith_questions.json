@@ -1,0 +1,54 @@
+{
+  "project": "membership13",
+  "note": "These are public-safe question definitions. Private profile facts belong in /home/we6jbo/.restore-interfaith-pii/jeremiah_private_profile.json.",
+  "questions": [
+    {
+      "id": "q01",
+      "type": "text",
+      "label": "What name do you want to use in the intro?",
+      "default": "Jeremiah"
+    },
+    {
+      "id": "q02",
+      "type": "text",
+      "label": "What forum handle should the intro mention?",
+      "default": "we6jbo"
+    },
+    {
+      "id": "q03",
+      "type": "dropdown",
+      "label": "How much personal detail should the public intro include?",
+      "options": [
+        "Very short",
+        "Moderate",
+        "Detailed but safe",
+        "Full personal story"
+      ],
+      "default": "Detailed but safe"
+    },
+    {
+      "id": "q38",
+      "type": "yesno",
+      "label": "Mention genealogy?",
+      "default": true
+    },
+    {
+      "id": "q40",
+      "type": "yesno",
+      "label": "Mention Lutheran family continuity or older family religious history?",
+      "default": true
+    },
+    {
+      "id": "q43",
+      "type": "text",
+      "label": "What do you hope to learn from the forum?",
+      "default": "how religion evolved from early human symbolic meaning, ritual, sacred imagination, the Lion Man, and later Eastern religions"
+    },
+    {
+      "id": "q50",
+      "type": "text",
+      "label": "Any final detail you want included?",
+      "default": "I also am a family-tree researcher. I started around 2008, and I am constantly researching. My late family lines include people such as John McCabe (1896), Alice Elliott (1906), Archie Smith (1894), Polly Bowman (1887), Burke Maynard (1904), Amelia Hedtke (1904), Percy Shapley (1901), and Minnie Schlorff (1905). I did family-tree research over the spring, and I learned about Lutherans in my family tree from the book Ancestors and Descendants of the Indiana Pioneer George Bowman: A History of the Bowmans From 1738."
+    }
+  ]
+}
