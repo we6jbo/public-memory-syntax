@@ -1,9 +1,9 @@
 {
   "pack_name": "Penrose Spectrum Network Command Pack",
-  "version": 1,
-  "updated_by": "ChatGPT suggested command pack",
+  "version": 3,
+  "updated_by": "Jeremiah Nesting Engine Upgrade",
   "safe_format": "json-only-no-shell-execution",
-  "default_reply": "Penrose Spectrum Network command pack is loaded. Type help for commands.",
+  "default_reply": "Penrose Spectrum Network command pack is loaded. Type greetings for commands.",
   "online_llm_policy": {
     "default_enabled": false,
     "max_monthly_usd": 0,
@@ -20,9 +20,19 @@
       "reply": "OK. Penrose Spectrum Network /chat is running."
     },
     {
-      "match": ["help", "commands"],
+      "match": ["greetings", "commands", "menu"],
       "action": "reply",
-      "reply": "Commands: hello, help, network, pi health, speedtest, outage, emergency, clairemont repairs, note add TEXT, notes, llm status, llm check, ai TEXT, local ai TEXT, online ai TEXT, restore commands."
+      "reply": "Main Menu (15 Options Available):\n1. greetings - Access this main menu layout\n2. diagnostics - Access 10 deep system health & debugging utilities\n3. speedtest - Run internet connection test\n4. outage - Check Spectrum and local grid statuses\n5. emergency - Fetch active weather or seismic alerts\n6. clairemont repairs - Pull public 92110/92117 road repair updates\n7. note add TEXT - Save a static log entry\n8. notes - List all cached notes\n9. llm status - Report local AI health\n10. llm check - Verify API restrictions and account costs\n11. local ai TEXT - Route query directly to offline GGUF engine\n12. online ai TEXT - Check online AI routing conditions\n13. ai TEXT - Intelligent automatic query classifier\n14. restore commands - Re-download latest pack from GitHub\n15. pi health - Overview of system hardware state"
+    },
+    {
+      "match": ["diagnostics", "diagnostic menu", "sysdiag"],
+      "action": "reply",
+      "reply": "Diagnostics Sub-Menu (10 Safe Investigation Options):\n1. internet tools - View 10 advanced routing check options\n2. check ram - Analyze RAM allocation and active swap file pressure\n3. disk space - Check remaining storage space on SD card/storage drives\n4. cpu load - Measure individual processor core capacity\n5. core temp - Output current Raspberry Pi thermal metrics in Celsius\n6. system logs - Display recent kernel panic or hardware error strings\n7. active processes - Identify top resource-consuming background tasks\n8. systemd status - Audit active infrastructure service run-states\n9. USB devices - Enumerate attached hardware peripherals\n10. uptime - Calculate runtime duration and performance averages"
+    },
+    {
+      "match": ["internet tools", "net tools", "routing diagnostics"],
+      "action": "reply",
+      "reply": "Internet Tools Deep-Menu (10 Clean Routing Utilities):\n1. ping gateway - Measure local router link responsiveness latency\n2. external ip - Ping external lookup engines to find your public WAN IP\n3. local ip - Identify active internal WLAN/Ethernet network addresses\n4. dns lookup - Resolve names via remote Cloudflare/Google DNS\n5. trace route - Trace path hops to public internet infrastructure\n6. port check - Scan open communication channels on local interface\n7. wifi signal - Read current wireless interface link strength percentages\n8. dhcp lease - Check internal network lease expiration timestamp windows\n9. netstat overview - View active established remote server data sockets\n10. clear routing - Flush internal route caches to re-establish connection drops"
     },
     {
       "match_contains": ["network", "ip address", "wifi", "ethernet"],
