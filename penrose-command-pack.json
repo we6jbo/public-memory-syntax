@@ -1,0 +1,82 @@
+{
+  "pack_name": "Penrose Spectrum Network Command Pack",
+  "version": 1,
+  "updated_by": "ChatGPT suggested command pack",
+  "safe_format": "json-only-no-shell-execution",
+  "default_reply": "Penrose Spectrum Network command pack is loaded. Type help for commands.",
+  "online_llm_policy": {
+    "default_enabled": false,
+    "max_monthly_usd": 0,
+    "require_no_credit_card_attached": true,
+    "require_no_billing_account_attached": true,
+    "require_manual_verification_not_expired": true,
+    "manual_verification_max_age_days": 30,
+    "note": "The Pi must not trust online pricing automatically. Private config must confirm no credit card, no billing account, and max_monthly_usd 0."
+  },
+  "commands": [
+    {
+      "match": ["hello", "hi", "test"],
+      "action": "reply",
+      "reply": "OK. Penrose Spectrum Network /chat is running."
+    },
+    {
+      "match": ["help", "commands"],
+      "action": "reply",
+      "reply": "Commands: hello, help, network, pi health, speedtest, outage, emergency, clairemont repairs, note add TEXT, notes, llm status, llm check, ai TEXT, local ai TEXT, online ai TEXT, restore commands."
+    },
+    {
+      "match_contains": ["network", "ip address", "wifi", "ethernet"],
+      "action": "network"
+    },
+    {
+      "match_contains": ["pi health", "cpu", "memory", "temperature"],
+      "action": "health"
+    },
+    {
+      "match_contains": ["speedtest", "speed test", "internet speed"],
+      "action": "speedtest"
+    },
+    {
+      "match_contains": ["outage", "spectrum", "emergency", "tornado", "earthquake", "fire warning"],
+      "action": "feed_cache",
+      "feed_key": "outage"
+    },
+    {
+      "match_contains": ["clairemont", "92110", "92117", "minor repair", "road repair"],
+      "action": "feed_cache",
+      "feed_key": "clairemont_repairs"
+    },
+    {
+      "prefix": "note add ",
+      "action": "note_add"
+    },
+    {
+      "match": ["notes", "list notes", "note list"],
+      "action": "notes"
+    },
+    {
+      "match": ["llm status", "ai status"],
+      "action": "llm_status"
+    },
+    {
+      "match": ["llm check", "ai check", "billing check", "cost check"],
+      "action": "llm_check"
+    },
+    {
+      "prefix": "local ai ",
+      "action": "local_llm"
+    },
+    {
+      "prefix": "online ai ",
+      "action": "online_llm"
+    },
+    {
+      "prefix": "ai ",
+      "action": "smart_ai"
+    },
+    {
+      "match": ["restore command", "restore commands", "github restore", "self restore"],
+      "action": "restore_commands"
+    }
+  ]
+}
