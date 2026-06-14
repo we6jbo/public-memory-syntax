@@ -2,17 +2,22 @@
 """
 Public-safe GitHub rescue version of activerec-pi-hub.py.
 
-This file is safe to put on GitHub because it contains:
+Safe for GitHub:
 - No API keys
 - No private notes
 - No secret tokens
-- No hard dependency on paid LLMs
+- No paid LLM enabled by default
 
-Private settings should stay here on the Raspberry Pi:
+Private config stays on the Raspberry Pi:
   /opt/activerec/private/config.json
 
-Private Gemini API key, if ever used:
+Private API key, if ever used:
   /opt/activerec/private/gemini_api_key.txt
+
+This rescue version defaults to bind_host 0.0.0.0 so your T14 can still reach:
+  http://192.168.5.215:8764/chat?message=hello
+
+Firewall should still limit access to trusted devices only.
 """
 
 import json
@@ -33,8 +38,30 @@ NOTES_FILE = DATA_DIR / "notes.json"
 LOG_FILE = DATA_DIR / "requests.log"
 LLM_STATUS_FILE = DATA_DIR / "llm-provider-status.json"
 
+GITHUB_RESTORE_URL = "https://raw.githubusercontent.com/we6jbo/public-memory-syntax/refs/heads/main/activerec-pi-hub.py"
+
+RESTORE_COMMANDS = f"""
+Restore ActiveRec from GitHub:
+
+Using curl:
+sudo curl -fsSL '{GITHUB_RESTORE_URL}' -o /opt/activerec/activerec-pi-hub.py
+sudo chmod 755 /opt/activerec/activerec-pi-hub.py
+sudo python3 -m py_compile /opt/activerec/activerec-pi-hub.py
+sudo systemctl restart activerec-pi-hub.service
+
+Using wget:
+sudo wget -q -O /opt/activerec/activerec-pi-hub.py '{GITHUB_RESTORE_URL}'
+sudo chmod 755 /opt/activerec/activerec-pi-hub.py
+sudo python3 -m py_compile /opt/activerec/activerec-pi-hub.py
+sudo systemctl restart activerec-pi-hub.service
+
+Test after restore:
+curl 'http://127.0.0.1:8764/chat?message=hello'
+curl 'http://192.168.5.215:8764/chat?message=hello'
+"""
+
 DEFAULT_CONFIG = {
-    "bind_host": "127.0.0.1",
+    "bind_host": "0.0.0.0",
     "ports": [8764, 8765],
     "max_message_length": 800,
 
@@ -100,6 +127,7 @@ def ensure_data():
 
 def write_log(line):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+
     with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write(line.rstrip() + "\n")
 
@@ -210,10 +238,12 @@ def save_notes(notes):
 
 def add_note(text):
     notes = load_notes()
+
     notes.append({
         "time": now(),
         "text": text[:800]
     })
+
     save_notes(notes)
 
     return "Saved note."
@@ -361,8 +391,8 @@ def basic_planner(message):
     return (
         "Rescue planner bot:\n"
         f"You said: {message}\n\n"
-        "I can save notes, show network info, show Pi health, and optionally use "
-        "Gemini only when your private local config explicitly allows it."
+        "I can save notes, show network info, show Pi health, show restore commands, "
+        "and optionally use Gemini only when your private local config explicitly allows it."
     )
 
 
@@ -383,8 +413,12 @@ def planner(message):
             "- notes\n"
             "- ai TEXT\n"
             "- local ai TEXT\n"
-            "- llm status"
+            "- llm status\n"
+            "- restore commands"
         )
+
+    if ml in ("restore command", "restore commands", "github restore", "self restore"):
+        return RESTORE_COMMANDS
 
     if "network" in ml or "ip address" in ml:
         return network_info()
@@ -474,7 +508,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve(port):
-    host = CONFIG.get("bind_host", "127.0.0.1")
+    host = CONFIG.get("bind_host", "0.0.0.0")
     httpd = ThreadingHTTPServer((host, int(port)), Handler)
 
     print(f"Serving on http://{host}:{port}/chat?message=hello", flush=True)
