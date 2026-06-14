@@ -1,0 +1,44 @@
+# --- NON-SENSITIVE REMOTE LOGIC ENGINE ---
+# This code is maintained on GitHub and executed locally by vpn_monitor.sh
+
+# Ensure JSON output structure exists safely
+mkdir -p "$(dirname "$OUTPUT_FILE")"
+if [ ! -s "$OUTPUT_FILE" ]; then
+    echo "[]" > "$OUTPUT_FILE"
+fi
+
+# Scan network sockets for the target VPN IP
+pids=$(ss -ntp 2>/dev/null | grep "$TARGET_IP" | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u)
+
+# If no matching traffic is running, exit out early
+if [ -z "$pids" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+
+# Ping candidate LAN targets to find the active server
+recommended_ip="None Available"
+for ip in "${CANDIDATE_IPS[@]}"; do
+    if ping -c 1 -W 1 "$ip" >/dev/null 2>&1; then
+        recommended_ip="$ip"
+        break
+    fi
+done
+
+# Document the processes attempting connections
+for pid in $pids; do
+    exe_path=$(readlink -f "/proc/$pid/exe" 2>/dev/null)
+    
+    if [ -n "$exe_path" ]; then
+        timestamp=$(date --iso-8601=seconds)
+        tmp_json=$(mktemp)
+        
+        # Format and append to JSON array
+        jq --arg time "$timestamp" \
+           --arg path "$exe_path" \
+           --arg rec "$recommended_ip" \
+           '. += [{"timestamp": $time, "program_path": $path, "recommended_lan_ip": $rec}]' \
+           "$OUTPUT_FILE" > "$tmp_json"
+        
+        mv "$tmp_json" "$OUTPUT_FILE"
+    fi
+done
